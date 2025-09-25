@@ -1,0 +1,22 @@
+# Strybk Root .htaccess
+# Redirect all requests to public folder
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect everything to public folder
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L]
+    
+    # Prevent access to sensitive files
+    RewriteRule ^(app|storage|install/schema\.sql|.*\.md)(/.*)?$ - [F,L]
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "\.(env|json|lock|yml|yaml|xml|log)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
