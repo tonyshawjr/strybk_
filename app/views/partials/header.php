@@ -187,7 +187,7 @@
                 </li>
                 <li>
                     <form method="POST" action="/logout" style="display: inline;">
-                        <input type="hidden" name="csrf_token" value="<?= $auth->csrfToken() ?>">
+                        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
                         <button type="submit" class="btn btn-sm" style="background: var(--gray-600);">
                             Logout
                         </button>

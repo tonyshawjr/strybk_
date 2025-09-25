@@ -62,7 +62,7 @@
                         <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="btn btn-sm">Edit</a>
                         <a href="/read/<?= htmlspecialchars($book['slug']) ?>" class="btn btn-sm">Read</a>
                         <form method="POST" action="/books/<?= $book['id'] ?>/visibility" class="inline-form">
-                            <input type="hidden" name="csrf_token" value="<?= $auth->csrfToken() ?>">
+                            <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
                             <button type="submit" class="btn btn-sm btn-ghost">
                                 <?= $book['is_public'] ? 'Make Private' : 'Make Public' ?>
                             </button>

@@ -12,7 +12,7 @@
     </div>
 
     <form method="POST" action="/books" enctype="multipart/form-data" class="book-form">
-        <input type="hidden" name="csrf_token" value="<?= $auth->csrfToken() ?>">
+        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
         
         <div class="form-group">
             <label for="title">Title *</label>

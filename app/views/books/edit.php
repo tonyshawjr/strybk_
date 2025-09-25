@@ -16,7 +16,7 @@
             <div class="book-meta">
                 <h2>Book Settings</h2>
                 <form method="POST" action="/books/<?= $book['id'] ?>/update" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="<?= $auth->csrfToken() ?>">
+                    <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
                     
                     <div class="form-group">
                         <label for="title">Title</label>
@@ -63,7 +63,7 @@
                     <h3>Danger Zone</h3>
                     <form method="POST" action="/books/<?= $book['id'] ?>/delete" 
                           onsubmit="return confirm('Are you sure? This will delete the book and all its pages.')">
-                        <input type="hidden" name="csrf_token" value="<?= $auth->csrfToken() ?>">
+                        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
                         <button type="submit" class="btn btn-danger btn-block">Delete Book</button>
                     </form>
                 </div>
@@ -110,7 +110,7 @@
                                 <div class="page-actions">
                                     <a href="/pages/<?= $page['id'] ?>/edit" class="btn btn-sm">Edit</a>
                                     <form method="POST" action="/pages/<?= $page['id'] ?>/delete" class="inline-form">
-                                        <input type="hidden" name="csrf_token" value="<?= $auth->csrfToken() ?>">
+                                        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
                                         <button type="submit" class="btn btn-sm btn-ghost" 
                                                 onclick="return confirm('Delete this page?')">Delete</button>
                                     </form>
