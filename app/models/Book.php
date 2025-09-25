@@ -16,9 +16,7 @@ class Book {
      */
     public function getUserBooks(int $userId): array {
         $sql = "SELECT * FROM books WHERE created_by = ? ORDER BY updated_at DESC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->db->select($sql, [$userId]);
     }
     
     /**
@@ -26,10 +24,7 @@ class Book {
      */
     public function find(int $id): ?array {
         $sql = "SELECT * FROM books WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $this->db->selectOne($sql, [$id]);
     }
     
     /**
@@ -37,53 +32,43 @@ class Book {
      */
     public function findBySlug(string $slug): ?array {
         $sql = "SELECT * FROM books WHERE slug = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$slug]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $this->db->selectOne($sql, [$slug]);
     }
     
     /**
      * Create a new book
      */
     public function create(array $data): int {
-        $sql = "INSERT INTO books (title, slug, subtitle, author, cover_path, is_public, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            $data['title'],
-            $data['slug'],
-            $data['subtitle'] ?? null,
-            $data['author'] ?? null,
-            $data['cover_path'] ?? null,
-            $data['is_public'] ?? false,
-            $data['created_by']
+        return $this->db->insert('books', [
+            'title' => $data['title'],
+            'slug' => $data['slug'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'author' => $data['author'] ?? null,
+            'cover_path' => $data['cover_path'] ?? null,
+            'is_public' => $data['is_public'] ?? 0,
+            'created_by' => $data['created_by']
         ]);
-        return $this->db->lastInsertId();
     }
     
     /**
      * Update a book
      */
     public function update(int $id, array $data): bool {
-        $sql = "UPDATE books SET title = ?, subtitle = ?, author = ?, is_public = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            $data['title'],
-            $data['subtitle'] ?? null,
-            $data['author'] ?? null,
-            $data['is_public'] ?? false,
-            $id
-        ]);
+        return $this->db->update('books', [
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'author' => $data['author'] ?? null,
+            'is_public' => $data['is_public'] ?? 0
+        ], ['id' => $id]) > 0;
     }
     
     /**
      * Update book cover
      */
     public function updateCover(int $id, string $coverPath): bool {
-        $sql = "UPDATE books SET cover_path = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$coverPath, $id]);
+        return $this->db->update('books', [
+            'cover_path' => $coverPath
+        ], ['id' => $id]) > 0;
     }
     
     /**
@@ -91,27 +76,24 @@ class Book {
      */
     public function toggleVisibility(int $id): bool {
         $sql = "UPDATE books SET is_public = NOT is_public WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$id]);
+        $stmt = $this->db->query($sql, [$id]);
+        return $stmt->rowCount() > 0;
     }
     
     /**
      * Delete a book
      */
     public function delete(int $id): bool {
-        $sql = "DELETE FROM books WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$id]);
+        return $this->db->delete('books', ['id' => $id]) > 0;
     }
     
     /**
      * Check if user owns the book
      */
     public function isOwner(int $bookId, int $userId): bool {
-        $sql = "SELECT COUNT(*) FROM books WHERE id = ? AND created_by = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId, $userId]);
-        return $stmt->fetchColumn() > 0;
+        $sql = "SELECT COUNT(*) as count FROM books WHERE id = ? AND created_by = ?";
+        $result = $this->db->selectOne($sql, [$bookId, $userId]);
+        return $result && $result['count'] > 0;
     }
     
     /**
@@ -134,19 +116,17 @@ class Book {
      * Get page count for a book
      */
     public function getPageCount(int $bookId): int {
-        $sql = "SELECT COUNT(*) FROM pages WHERE book_id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId]);
-        return $stmt->fetchColumn();
+        $sql = "SELECT COUNT(*) as count FROM pages WHERE book_id = ?";
+        $result = $this->db->selectOne($sql, [$bookId]);
+        return $result ? (int)$result['count'] : 0;
     }
     
     /**
      * Get total word count for a book
      */
     public function getWordCount(int $bookId): int {
-        $sql = "SELECT SUM(word_count) FROM pages WHERE book_id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId]);
-        return $stmt->fetchColumn() ?: 0;
+        $sql = "SELECT COALESCE(SUM(word_count), 0) as total FROM pages WHERE book_id = ?";
+        $result = $this->db->selectOne($sql, [$bookId]);
+        return $result ? (int)$result['total'] : 0;
     }
 }

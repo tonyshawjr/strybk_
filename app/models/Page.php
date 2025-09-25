@@ -16,9 +16,7 @@ class Page {
      */
     public function getBookPages(int $bookId): array {
         $sql = "SELECT * FROM pages WHERE book_id = ? ORDER BY order_index ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->db->select($sql, [$bookId]);
     }
     
     /**
@@ -26,10 +24,7 @@ class Page {
      */
     public function find(int $id): ?array {
         $sql = "SELECT * FROM pages WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $this->db->selectOne($sql, [$id]);
     }
     
     /**
@@ -37,10 +32,7 @@ class Page {
      */
     public function findByBookAndSlug(int $bookId, string $slug): ?array {
         $sql = "SELECT * FROM pages WHERE book_id = ? AND slug = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId, $slug]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $this->db->selectOne($sql, [$bookId, $slug]);
     }
     
     /**
@@ -50,33 +42,28 @@ class Page {
         // Get the next order index
         $orderIndex = $this->getNextOrderIndex($data['book_id']);
         
-        $sql = "INSERT INTO pages (book_id, title, slug, content, kind, order_index, word_count) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            $data['book_id'],
-            $data['title'],
-            $data['slug'],
-            $data['content'] ?? '',
-            $data['kind'] ?? 'text',
-            $orderIndex,
-            $data['word_count'] ?? 0
+        return $this->db->insert('pages', [
+            'book_id' => $data['book_id'],
+            'title' => $data['title'],
+            'slug' => $data['slug'],
+            'content' => $data['content'] ?? '',
+            'kind' => $data['kind'] ?? 'text',
+            'order_index' => $orderIndex,
+            'word_count' => $data['word_count'] ?? 0
         ]);
-        return $this->db->lastInsertId();
     }
     
     /**
      * Update a page
      */
     public function update(int $id, array $data): bool {
-        $sql = "UPDATE pages SET title = ?, content = ?, word_count = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            $data['title'],
-            $data['content'],
-            $data['word_count'] ?? $this->calculateWordCount($data['content']),
-            $id
-        ]);
+        $wordCount = $data['word_count'] ?? $this->calculateWordCount($data['content']);
+        
+        return $this->db->update('pages', [
+            'title' => $data['title'],
+            'content' => $data['content'],
+            'word_count' => $wordCount
+        ], ['id' => $id]) > 0;
     }
     
     /**
@@ -88,9 +75,7 @@ class Page {
         if (!$page) return false;
         
         // Delete the page
-        $sql = "DELETE FROM pages WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $result = $stmt->execute([$id]);
+        $result = $this->db->delete('pages', ['id' => $id]) > 0;
         
         // Reorder remaining pages
         if ($result) {
@@ -105,10 +90,9 @@ class Page {
      */
     public function reorder(array $pageIds): bool {
         $sql = "UPDATE pages SET order_index = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
         
         foreach ($pageIds as $index => $pageId) {
-            $stmt->execute([$index, $pageId]);
+            $this->db->query($sql, [$index, $pageId]);
         }
         
         return true;
@@ -118,11 +102,9 @@ class Page {
      * Get next order index for a book
      */
     private function getNextOrderIndex(int $bookId): int {
-        $sql = "SELECT MAX(order_index) FROM pages WHERE book_id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId]);
-        $maxIndex = $stmt->fetchColumn();
-        return ($maxIndex !== null) ? $maxIndex + 1 : 0;
+        $sql = "SELECT MAX(order_index) as max_index FROM pages WHERE book_id = ?";
+        $result = $this->db->selectOne($sql, [$bookId]);
+        return ($result && $result['max_index'] !== null) ? $result['max_index'] + 1 : 0;
     }
     
     /**
@@ -131,8 +113,7 @@ class Page {
     private function reorderAfterDeletion(int $bookId, int $deletedIndex): void {
         $sql = "UPDATE pages SET order_index = order_index - 1 
                 WHERE book_id = ? AND order_index > ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$bookId, $deletedIndex]);
+        $this->db->query($sql, [$bookId, $deletedIndex]);
     }
     
     /**
