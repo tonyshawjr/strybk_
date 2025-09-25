@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Configuration
+app/config.php
+.env
+
+# User uploads
+public/uploads/
+
+# Storage and cache
+storage/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Agent OS (local only)
+.agent-os/
+.serena/
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Build artifacts
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+
+# Database
+*.sql.bak
+*.sqlite
+
+# Sessions
+sessions/

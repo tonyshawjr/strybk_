@@ -1,0 +1,22 @@
+{
+  "name": "strybk",
+  "version": "0.1.0",
+  "description": "Minimalist online book publishing tool",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:quick": "playwright test -g @smoke",
+    "test:trace": "playwright test --trace on-first-retry",
+    "e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonyshawjr/strybk_.git"
+  },
+  "author": "Tony Shaw",
+  "license": "MIT"
+}
