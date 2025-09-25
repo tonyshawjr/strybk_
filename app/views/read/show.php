@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($title) ?> - Strybk</title>
+    <style>
+        :root {
+            --purple: #6C4AB6;
+            --indigo: #2E1A47;
+            --lime: #A8FF60;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: white;
+            color: var(--gray-900);
+            line-height: 1.8;
+        }
+        
+        .reader-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar TOC */
+        .toc-sidebar {
+            width: 300px;
+            background: var(--gray-50);
+            border-right: 1px solid var(--gray-200);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s;
+        }
+        
+        .toc-sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        
+        .toc-header {
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .book-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .book-author {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+        
+        .book-stats {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        
+        .toc-list {
+            list-style: none;
+        }
+        
+        .toc-item {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .toc-item:hover {
+            background: var(--gray-100);
+        }
+        
+        .toc-item.current {
+            background: white;
+            border-left-color: var(--purple);
+        }
+        
+        .toc-item.section {
+            padding-left: 2.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .toc-link {
+            color: var(--gray-700);
+            text-decoration: none;
+            display: block;
+        }
+        
+        .toc-number {
+            display: inline-block;
+            margin-right: 0.5rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+        
+        /* Main content */
+        .reader-main {
+            flex: 1;
+            margin-left: 300px;
+            transition: margin-left 0.3s;
+        }
+        
+        .reader-main.full-width {
+            margin-left: 0;
+        }
+        
+        .reader-header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .reader-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .toggle-toc {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            color: var(--gray-600);
+            transition: color 0.2s;
+        }
+        
+        .toggle-toc:hover {
+            color: var(--purple);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--gray-200);
+            border-radius: 2px;
+            overflow: hidden;
+            width: 200px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--purple);
+            transition: width 0.3s;
+        }
+        
+        .reader-content {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 3rem 2rem 6rem;
+        }
+        
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .page-kind {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-meta {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        /* Content styles */
+        .page-content {
+            font-size: 1.125rem;
+            line-height: 1.8;
+        }
+        
+        .page-content h1 {
+            font-size: 2rem;
+            margin: 2rem 0 1rem;
+        }
+        
+        .page-content h2 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+        }
+        
+        .page-content h3 {
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+        
+        .page-content p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .page-content ul,
+        .page-content ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+        
+        .page-content li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-content blockquote {
+            border-left: 4px solid var(--purple);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: var(--gray-700);
+        }
+        
+        .page-content pre {
+            background: var(--gray-900);
+            color: var(--gray-100);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        
+        .page-content code {
+            background: var(--gray-100);
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.875em;
+        }
+        
+        .page-content pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        .page-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+        }
+        
+        /* Picture page */
+        .picture-page {
+            text-align: center;
+            padding: 3rem 0;
+        }
+        
+        .picture-page img {
+            max-width: 100%;
+            height: auto;
+            max-height: 70vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .picture-caption {
+            margin-top: 2rem;
+            font-style: italic;
+            color: var(--gray-600);
+        }
+        
+        /* Divider page */
+        .divider-page {
+            text-align: center;
+            padding: 6rem 0;
+        }
+        
+        .divider-ornament {
+            font-size: 2rem;
+            color: var(--gray-400);
+            margin-bottom: 1rem;
+        }
+        
+        .divider-text {
+            font-style: italic;
+            color: var(--gray-600);
+        }
+        
+        /* Navigation */
+        .page-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            margin-top: 4rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .nav-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .nav-button:hover {
+            background: var(--purple);
+            color: white;
+        }
+        
+        .nav-button.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .toc-sidebar {
+                transform: translateX(-100%);
+                z-index: 20;
+            }
+            
+            .toc-sidebar.visible {
+                transform: translateX(0);
+            }
+            
+            .reader-main {
+                margin-left: 0;
+            }
+            
+            .reader-content {
+                padding: 2rem 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .page-content {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reader-container">
+        <!-- Table of Contents Sidebar -->
+        <aside class="toc-sidebar" id="toc-sidebar">
+            <div class="toc-header">
+                <div class="book-title"><?= htmlspecialchars($book['title']) ?></div>
+                <?php if ($book['author']): ?>
+                    <div class="book-author">by <?= htmlspecialchars($book['author']) ?></div>
+                <?php endif; ?>
+                <div class="book-stats">
+                    <?= number_format($totalWords) ?> words • 
+                    <?= $readingTime ?> min read
+                </div>
+            </div>
+            
+            <ul class="toc-list">
+                <?php foreach ($toc as $item): ?>
+                    <li class="toc-item <?= $item['kind'] ?> <?= $item['is_current'] ? 'current' : '' ?>">
+                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($item['slug']) ?>" class="toc-link">
+                            <span class="toc-number"><?= $item['number'] ?></span>
+                            <?= htmlspecialchars($item['title']) ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="reader-main" id="reader-main">
+            <header class="reader-header">
+                <div class="reader-controls">
+                    <button class="toggle-toc" id="toggle-toc" title="Toggle Table of Contents">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h18M3 6h18M3 18h18"/>
+                        </svg>
+                    </button>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: <?= $progress ?>%"></div>
+                    </div>
+                    
+                    <span style="font-size: 0.875rem; color: var(--gray-600);">
+                        <?= $progress ?>% complete
+                    </span>
+                </div>
+                
+                <?php if ($auth->check() && $book['created_by'] == $auth->user()['id']): ?>
+                    <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" style="color: var(--purple); text-decoration: none;">
+                        Edit Book
+                    </a>
+                <?php endif; ?>
+            </header>
+            
+            <article class="reader-content">
+                <?php if ($currentPage['kind'] === 'picture'): ?>
+                    <div class="picture-page">
+                        <?php if ($currentPage['image_path']): ?>
+                            <img src="<?= htmlspecialchars($currentPage['image_path']) ?>" alt="<?= htmlspecialchars($currentPage['title']) ?>">
+                        <?php endif; ?>
+                        <?php if ($currentPage['title']): ?>
+                            <div class="picture-caption"><?= htmlspecialchars($currentPage['title']) ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php elseif ($currentPage['kind'] === 'divider'): ?>
+                    <div class="divider-page">
+                        <div class="divider-ornament">❦</div>
+                        <?php if ($currentPage['title']): ?>
+                            <div class="divider-text"><?= htmlspecialchars($currentPage['title']) ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <header class="page-header">
+                        <div class="page-kind"><?= ucfirst($currentPage['kind']) ?></div>
+                        <h1 class="page-title"><?= htmlspecialchars($currentPage['title']) ?></h1>
+                        <div class="page-meta">
+                            <?= number_format($currentPage['word_count']) ?> words
+                        </div>
+                    </header>
+                    
+                    <div class="page-content">
+                        <?= $currentPage['rendered_content'] ?>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Page Navigation -->
+                <nav class="page-navigation">
+                    <?php if ($prevPage): ?>
+                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($prevPage['slug']) ?>" class="nav-button">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6"/>
+                            </svg>
+                            Previous
+                        </a>
+                    <?php else: ?>
+                        <span class="nav-button disabled">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6"/>
+                            </svg>
+                            Previous
+                        </span>
+                    <?php endif; ?>
+                    
+                    <?php if ($nextPage): ?>
+                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button">
+                            Next
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
+                        </a>
+                    <?php else: ?>
+                        <span class="nav-button disabled">
+                            Next
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
+                        </span>
+                    <?php endif; ?>
+                </nav>
+            </article>
+        </main>
+    </div>
+    
+    <script>
+        // Toggle TOC sidebar
+        const tocSidebar = document.getElementById('toc-sidebar');
+        const readerMain = document.getElementById('reader-main');
+        const toggleBtn = document.getElementById('toggle-toc');
+        
+        toggleBtn.addEventListener('click', () => {
+            tocSidebar.classList.toggle('hidden');
+            readerMain.classList.toggle('full-width');
+            
+            // On mobile, use different class
+            if (window.innerWidth <= 768) {
+                tocSidebar.classList.toggle('visible');
+            }
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                const prevLink = document.querySelector('.page-navigation a:first-child');
+                if (prevLink && !prevLink.classList.contains('disabled')) {
+                    prevLink.click();
+                }
+            } else if (e.key === 'ArrowRight') {
+                const nextLink = document.querySelector('.page-navigation a:last-child');
+                if (nextLink && !nextLink.classList.contains('disabled')) {
+                    nextLink.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
