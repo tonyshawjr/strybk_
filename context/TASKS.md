@@ -16,21 +16,14 @@
 - [x] Write Playwright tests for installer
 - [x] Initial git commit and push to main
 
-## Next (Phase 1 - Milestone 2: Books)
-- [ ] Create library view page
-- [ ] Build "New Book" form
-- [ ] Implement book CRUD operations
-- [ ] Add cover image upload
-- [ ] Create book visibility toggle
-- [ ] Write tests for book management
-
-## Backlog (Phase 1 - Remaining Milestones)
-
-### Milestone 3: Pages
+## Next (Phase 1 - Milestone 3: Pages)
 - [ ] Create page editor with SimpleMDE
-- [ ] Implement Markdown rendering
+- [ ] Implement Markdown rendering with Parsedown
 - [ ] Build auto-generated TOC
 - [ ] Add word count tracking
+- [ ] Create picture page type
+- [ ] Create section divider page type
+## Backlog (Phase 1 - Remaining Milestones)
 
 ### Milestone 4: Reorder & Navigation
 - [ ] Implement SortableJS for drag-drop
@@ -49,6 +42,17 @@
   - Set up README and documentation
   - Configured .gitignore
   - Established context files
+
+- [2025-09-25] Phase 1 Milestone 2: Books - COMPLETE
+  - Created Book model with full CRUD operations
+  - Built BookController with all book management features
+  - Created library view page (books/index.php)
+  - Built "New Book" form with cover upload
+  - Implemented book edit page with settings
+  - Added book visibility toggle (public/private)
+  - Created DashboardController and dashboard view
+  - Created Page model for future page management
+  - Added Playwright tests: books.spec.ts, auth.spec.ts, smoke.spec.ts
 
 ## Links
 - GitHub: https://github.com/tonyshawjr/strybk_.git
