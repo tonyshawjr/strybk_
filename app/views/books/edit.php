@@ -127,7 +127,7 @@
                     View Book
                 </a>
                 <?php if ($book['is_public']): ?>
-                    <p class="help-text">Public URL: <?= htmlspecialchars($config['base_url'] ?? '') ?>/read/<?= htmlspecialchars($book['slug']) ?></p>
+                    <p class="help-text">Public URL: /read/<?= htmlspecialchars($book['slug']) ?></p>
                 <?php endif; ?>
             </div>
         </div>
