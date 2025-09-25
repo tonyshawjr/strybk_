@@ -77,7 +77,10 @@ function method_field(string $method): string {
 }
 
 function flash(string $message, string $type = 'info'): void {
-    $_SESSION['flash'] = [
+    if (!isset($_SESSION['flash'])) {
+        $_SESSION['flash'] = [];
+    }
+    $_SESSION['flash'][] = [
         'message' => $message,
         'type' => $type
     ];
