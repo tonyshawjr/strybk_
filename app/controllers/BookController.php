@@ -47,8 +47,7 @@ class BookController {
         
         view('books/create', [
             'title' => 'New Book',
-            'auth' => $this->auth,
-            'csrf_token' => $this->auth->getCsrfToken()
+            'auth' => $this->auth
         ]);
     }
     
@@ -152,8 +151,7 @@ class BookController {
             'title' => 'Edit: ' . $book['title'],
             'auth' => $this->auth,
             'book' => $book,
-            'pages' => $pages,
-            'csrf_token' => $this->auth->getCsrfToken()
+            'pages' => $pages
         ]);
     }
     
