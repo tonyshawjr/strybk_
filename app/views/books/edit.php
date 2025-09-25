@@ -74,7 +74,7 @@
             <div class="pages-section">
                 <div class="section-header">
                     <h2>Pages</h2>
-                    <a href="/books/<?= htmlspecialchars($book['slug']) ?>/pages/new" class="btn btn-primary">
+                    <a href="/books/<?= $book['id'] ?>/pages/new" class="btn btn-primary">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 5v14M5 12h14"/>
                         </svg>

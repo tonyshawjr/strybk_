@@ -27,7 +27,7 @@ class ReadController {
     /**
      * Display book reader
      */
-    public function show(string $bookSlug, ?string $pageSlug = null): void {
+    public function show(string $bookSlug, string $pageSlug = ''): void {
         // Get book by slug
         $book = $this->bookModel->findBySlug($bookSlug);
         

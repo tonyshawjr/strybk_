@@ -35,16 +35,16 @@ class Router {
         $this->routes['POST']['/books/{id}/delete'] = 'BookController@delete';
         
         // Pages routes
-        $this->routes['GET']['/books/{book_slug}/pages/new'] = 'PageController@create';
-        $this->routes['POST']['/books/{book_id}/pages'] = 'PageController@store';
+        $this->routes['GET']['/books/{book_id}/pages/new'] = 'PageController@create';
+        $this->routes['POST']['/books/{book_id}/pages/store'] = 'PageController@store';
         $this->routes['GET']['/pages/{id}/edit'] = 'PageController@edit';
         $this->routes['POST']['/pages/{id}/update'] = 'PageController@update';
         $this->routes['POST']['/pages/{id}/delete'] = 'PageController@delete';
-        $this->routes['POST']['/pages/reorder'] = 'PageController@reorder';
+        $this->routes['POST']['/books/{book_id}/pages/reorder'] = 'PageController@reorder';
         
         // Public book viewing
-        $this->routes['GET']['/read/{book_slug}'] = 'ReaderController@book';
-        $this->routes['GET']['/read/{book_slug}/{page_slug}'] = 'ReaderController@page';
+        $this->routes['GET']['/read/{book_slug}'] = 'ReadController@show';
+        $this->routes['GET']['/read/{book_slug}/{page_slug}'] = 'ReadController@show';
     }
     
     public function handle(string $uri, string $method): void {

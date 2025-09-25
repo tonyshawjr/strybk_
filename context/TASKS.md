@@ -16,19 +16,12 @@
 - [x] Write Playwright tests for installer
 - [x] Initial git commit and push to main
 
-## Next (Phase 1 - Milestone 3: Pages)
-- [ ] Create page editor with SimpleMDE
-- [ ] Implement Markdown rendering with Parsedown
-- [ ] Build auto-generated TOC
-- [ ] Add word count tracking
-- [ ] Create picture page type
-- [ ] Create section divider page type
+## Next (Phase 1 - Milestone 4: Reorder & Navigation)
+- [ ] Implement SortableJS for drag-drop page reordering
+- [ ] Add visual reordering interface in book edit
+- [ ] Create breadcrumb component for navigation
+- [ ] Add keyboard shortcuts for reader navigation
 ## Backlog (Phase 1 - Remaining Milestones)
-
-### Milestone 4: Reorder & Navigation
-- [ ] Implement SortableJS for drag-drop
-- [ ] Add prev/next navigation
-- [ ] Create breadcrumb component
 
 ### Milestone 5: Polish
 - [ ] Design minimal CSS system
@@ -54,7 +47,20 @@
   - Created Page model for future page management
   - Added Playwright tests: books.spec.ts, auth.spec.ts, smoke.spec.ts
 
+- [2025-09-25] Phase 1 Milestone 3: Pages - COMPLETE
+  - Created PageController with full CRUD operations
+  - Integrated SimpleMDE Markdown editor
+  - Implemented Parsedown for Markdown rendering
+  - Built auto-generated table of contents
+  - Added real-time word count tracking
+  - Created multiple page types (chapter, section, picture, divider)
+  - Built ReadController for public book viewing
+  - Created beautiful reader interface with TOC sidebar
+  - Added prev/next navigation with keyboard support
+  - Implemented reading progress indicator
+
 ## Links
-- GitHub: https://github.com/tonyshawjr/strybk_.git
+
+- GitHub: <https://github.com/tonyshawjr/strybk_.git>
 - Live Server: TBD (will be provided)
-- Design Inspiration: https://once.com/writebook
+- Design Inspiration: <https://once.com/writebook>
