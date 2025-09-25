@@ -59,7 +59,7 @@ class Book {
             'subtitle' => $data['subtitle'] ?? null,
             'author' => $data['author'] ?? null,
             'is_public' => $data['is_public'] ?? 0
-        ], ['id' => $id]) > 0;
+        ], 'id = :id', ['id' => $id]) > 0;
     }
     
     /**
@@ -68,7 +68,7 @@ class Book {
     public function updateCover(int $id, string $coverPath): bool {
         return $this->db->update('books', [
             'cover_path' => $coverPath
-        ], ['id' => $id]) > 0;
+        ], 'id = :id', ['id' => $id]) > 0;
     }
     
     /**
@@ -84,7 +84,7 @@ class Book {
      * Delete a book
      */
     public function delete(int $id): bool {
-        return $this->db->delete('books', ['id' => $id]) > 0;
+        return $this->db->delete('books', 'id = :id', ['id' => $id]) > 0;
     }
     
     /**

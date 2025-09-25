@@ -63,7 +63,7 @@ class Page {
             'title' => $data['title'],
             'content' => $data['content'],
             'word_count' => $wordCount
-        ], ['id' => $id]) > 0;
+        ], 'id = :id', ['id' => $id]) > 0;
     }
     
     /**
@@ -75,7 +75,7 @@ class Page {
         if (!$page) return false;
         
         // Delete the page
-        $result = $this->db->delete('pages', ['id' => $id]) > 0;
+        $result = $this->db->delete('pages', 'id = :id', ['id' => $id]) > 0;
         
         // Reorder remaining pages
         if ($result) {
