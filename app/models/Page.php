@@ -15,7 +15,7 @@ class Page {
      * Get all pages for a book
      */
     public function getBookPages(int $bookId): array {
-        $sql = "SELECT * FROM pages WHERE book_id = ? ORDER BY position ASC";
+        $sql = "SELECT * FROM pages WHERE book_id = ? ORDER BY order_index ASC";
         return $this->db->select($sql, [$bookId]);
     }
     
@@ -39,18 +39,20 @@ class Page {
      * Create a new page
      */
     public function create(array $data): int {
-        // Get the next position if not provided
-        $position = $data['position'] ?? $this->getNextPosition($data['book_id']);
+        // Get the next order_index if not provided
+        $orderIndex = isset($data['position']) ? $data['position'] - 1 : $this->getNextOrderIndex($data['book_id']);
+        
+        // Map our kinds to database kinds
+        $kind = $this->mapKindToDatabase($data['kind'] ?? 'text');
         
         return $this->db->insert('pages', [
             'book_id' => $data['book_id'],
             'title' => $data['title'],
             'slug' => $data['slug'],
             'content' => $data['content'] ?? '',
-            'kind' => $data['kind'] ?? 'chapter',
-            'position' => $position,
-            'word_count' => $data['word_count'] ?? 0,
-            'image_path' => $data['image_path'] ?? null
+            'kind' => $kind,
+            'order_index' => $orderIndex,
+            'word_count' => $data['word_count'] ?? 0
         ]);
     }
     
@@ -62,10 +64,9 @@ class Page {
         
         if (isset($data['title'])) $updateData['title'] = $data['title'];
         if (isset($data['content'])) $updateData['content'] = $data['content'];
-        if (isset($data['kind'])) $updateData['kind'] = $data['kind'];
-        if (isset($data['position'])) $updateData['position'] = $data['position'];
+        if (isset($data['kind'])) $updateData['kind'] = $this->mapKindToDatabase($data['kind']);
+        if (isset($data['position'])) $updateData['order_index'] = $data['position'] - 1;
         if (isset($data['word_count'])) $updateData['word_count'] = $data['word_count'];
-        if (isset($data['image_path'])) $updateData['image_path'] = $data['image_path'];
         
         if (empty($updateData)) return false;
         
@@ -85,7 +86,7 @@ class Page {
         
         // Reorder remaining pages
         if ($result) {
-            $this->reorderAfterDeletion($page['book_id'], $page['position']);
+            $this->reorderAfterDeletion($page['book_id'], $page['order_index']);
         }
         
         return $result;
@@ -96,26 +97,26 @@ class Page {
      */
     public function updatePosition(int $id, int $position): bool {
         return $this->db->update('pages', [
-            'position' => $position
+            'order_index' => $position - 1
         ], 'id = :id', ['id' => $id]) > 0;
     }
     
     /**
-     * Get next position for a book
+     * Get next order_index for a book
      */
-    private function getNextPosition(int $bookId): int {
-        $sql = "SELECT MAX(position) as max_pos FROM pages WHERE book_id = ?";
+    private function getNextOrderIndex(int $bookId): int {
+        $sql = "SELECT MAX(order_index) as max_index FROM pages WHERE book_id = ?";
         $result = $this->db->selectOne($sql, [$bookId]);
-        return ($result && $result['max_pos'] !== null) ? $result['max_pos'] + 1 : 1;
+        return ($result && $result['max_index'] !== null) ? $result['max_index'] + 1 : 0;
     }
     
     /**
      * Reorder pages after deletion
      */
-    private function reorderAfterDeletion(int $bookId, int $deletedPosition): void {
-        $sql = "UPDATE pages SET position = position - 1 
-                WHERE book_id = ? AND position > ?";
-        $this->db->query($sql, [$bookId, $deletedPosition]);
+    private function reorderAfterDeletion(int $bookId, int $deletedIndex): void {
+        $sql = "UPDATE pages SET order_index = order_index - 1 
+                WHERE book_id = ? AND order_index > ?";
+        $this->db->query($sql, [$bookId, $deletedIndex]);
     }
     
     /**
@@ -142,5 +143,32 @@ class Page {
         }
         
         return $slug;
+    }
+    
+    /**
+     * Map our kind values to database enum values
+     */
+    private function mapKindToDatabase(string $kind): string {
+        $mapping = [
+            'chapter' => 'text',
+            'section' => 'section',
+            'picture' => 'picture',
+            'divider' => 'text'  // Store dividers as text with empty content
+        ];
+        
+        return $mapping[$kind] ?? 'text';
+    }
+    
+    /**
+     * Map database kind values to our kind values
+     */
+    public function mapKindFromDatabase(string $dbKind): string {
+        $mapping = [
+            'text' => 'chapter',
+            'section' => 'section',
+            'picture' => 'picture'
+        ];
+        
+        return $mapping[$dbKind] ?? 'chapter';
     }
 }

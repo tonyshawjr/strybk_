@@ -31,7 +31,7 @@
         
         <div class="form-group">
             <label for="position">Position</label>
-            <input type="number" id="position" name="position" value="<?= $page['position'] ?>" min="1">
+            <input type="number" id="position" name="position" value="<?= ($page['order_index'] ?? 0) + 1 ?>" min="1">
             <p class="help-text">Order of this page in the book</p>
         </div>
         
@@ -46,9 +46,9 @@
         </div>
         
         <div class="form-group picture-group" id="picture-group" <?= $page['kind'] !== 'picture' ? 'style="display: none;"' : '' ?>>
-            <?php if ($page['kind'] === 'picture' && $page['image_path']): ?>
+            <?php if ($page['kind'] === 'picture' && $page['content']): ?>
                 <div class="current-image">
-                    <img src="<?= htmlspecialchars($page['image_path']) ?>" alt="Current image">
+                    <img src="<?= htmlspecialchars($page['content']) ?>" alt="Current image">
                 </div>
             <?php endif; ?>
             <label for="image">Image</label>

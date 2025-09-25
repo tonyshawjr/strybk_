@@ -89,6 +89,11 @@
                 <?php else: ?>
                     <div class="pages-list" id="pages-list">
                         <?php foreach ($pages as $page): ?>
+                            <?php 
+                            // Map database kinds to display values
+                            $displayKind = $page['kind'];
+                            if ($displayKind === 'text') $displayKind = 'chapter';
+                            ?>
                             <div class="page-item" data-id="<?= $page['id'] ?>">
                                 <div class="drag-handle">
                                     <svg width="20" height="20" fill="currentColor">
@@ -102,7 +107,7 @@
                                 <div class="page-info">
                                     <h4><?= htmlspecialchars($page['title']) ?></h4>
                                     <span class="page-meta">
-                                        <?= ucfirst($page['kind']) ?> • 
+                                        <?= ucfirst($displayKind) ?> • 
                                         <?= number_format($page['word_count']) ?> words
                                     </span>
                                 </div>

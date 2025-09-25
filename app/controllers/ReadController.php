@@ -79,9 +79,27 @@ class ReadController {
             $currentPage = $pages[0];
         }
         
+        // Map database kinds to our display kinds and process content
+        foreach ($pages as &$page) {
+            $page['display_kind'] = $this->pageModel->mapKindFromDatabase($page['kind']);
+            // For dividers, check if content is empty to distinguish from chapters
+            if ($page['kind'] === 'text' && empty(trim($page['content']))) {
+                $page['display_kind'] = 'divider';
+            }
+        }
+        
+        // Update current page with display kind
+        $currentPage['display_kind'] = $currentPage['kind'] === 'text' && empty(trim($currentPage['content'])) 
+            ? 'divider' 
+            : $this->pageModel->mapKindFromDatabase($currentPage['kind']);
+        
         // Process page content based on type
-        if (in_array($currentPage['kind'], ['chapter', 'section'])) {
+        if (in_array($currentPage['display_kind'], ['chapter', 'section'])) {
             $currentPage['rendered_content'] = $this->parsedown->text($currentPage['content']);
+        }
+        // For picture pages, content field contains the image path
+        if ($currentPage['display_kind'] === 'picture') {
+            $currentPage['image_path'] = $currentPage['content'];
         }
         
         // Generate table of contents
@@ -139,7 +157,9 @@ class ReadController {
         $sectionNumber = 0;
         
         foreach ($pages as $page) {
-            if ($page['kind'] === 'chapter') {
+            $displayKind = $page['display_kind'] ?? $page['kind'];
+            
+            if ($displayKind === 'chapter') {
                 $chapterNumber++;
                 $sectionNumber = 0;
                 $toc[] = [
@@ -151,7 +171,7 @@ class ReadController {
                     'is_current' => $page['id'] == $currentPageId,
                     'word_count' => $page['word_count']
                 ];
-            } elseif ($page['kind'] === 'section') {
+            } elseif ($displayKind === 'section') {
                 $sectionNumber++;
                 $toc[] = [
                     'id' => $page['id'],

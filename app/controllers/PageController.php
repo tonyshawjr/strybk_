@@ -81,10 +81,13 @@ class PageController {
             $kind = 'chapter';
         }
         
-        // For picture pages, handle image upload
+        // For picture pages, handle image upload and store path in content
         $imagePath = null;
         if ($kind === 'picture' && isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
             $imagePath = $this->uploadImage($_FILES['image']);
+            if ($imagePath) {
+                $content = $imagePath; // Store image path in content field for picture pages
+            }
         }
         
         // Generate slug
@@ -105,8 +108,7 @@ class PageController {
                 'content' => $content,
                 'kind' => $kind,
                 'position' => $position,
-                'word_count' => $wordCount,
-                'image_path' => $imagePath
+                'word_count' => $wordCount
             ]);
             
             flash('Page created successfully!', 'success');
@@ -186,13 +188,15 @@ class PageController {
         }
         
         // Handle image upload for picture pages
-        $imagePath = $page['image_path'];
         if ($kind === 'picture' && isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            // Delete old image if exists
-            if ($imagePath && file_exists('public' . $imagePath)) {
-                unlink('public' . $imagePath);
+            // Delete old image if exists (stored in content field for picture pages)
+            if ($page['kind'] === 'picture' && $page['content'] && file_exists('public' . $page['content'])) {
+                unlink('public' . $page['content']);
             }
             $imagePath = $this->uploadImage($_FILES['image']);
+            if ($imagePath) {
+                $content = $imagePath; // Store new image path in content field
+            }
         }
         
         // Calculate word count
@@ -208,8 +212,7 @@ class PageController {
                 'content' => $content,
                 'kind' => $kind,
                 'position' => $position,
-                'word_count' => $wordCount,
-                'image_path' => $imagePath
+                'word_count' => $wordCount
             ]);
             
             flash('Page updated successfully!', 'success');
@@ -251,9 +254,9 @@ class PageController {
         try {
             $this->pageModel->delete($id);
             
-            // Delete image if exists
-            if ($page['image_path'] && file_exists('public' . $page['image_path'])) {
-                unlink('public' . $page['image_path']);
+            // Delete image if exists (stored in content field for picture pages)
+            if ($page['kind'] === 'picture' && $page['content'] && file_exists('public' . $page['content'])) {
+                unlink('public' . $page['content']);
             }
             
             flash('Page deleted successfully!', 'success');

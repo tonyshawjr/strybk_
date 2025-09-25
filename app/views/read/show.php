@@ -427,16 +427,17 @@
             </header>
             
             <article class="reader-content">
-                <?php if ($currentPage['kind'] === 'picture'): ?>
+                <?php $displayKind = $currentPage['display_kind'] ?? 'chapter'; ?>
+                <?php if ($displayKind === 'picture'): ?>
                     <div class="picture-page">
-                        <?php if ($currentPage['image_path']): ?>
+                        <?php if (isset($currentPage['image_path']) && $currentPage['image_path']): ?>
                             <img src="<?= htmlspecialchars($currentPage['image_path']) ?>" alt="<?= htmlspecialchars($currentPage['title']) ?>">
                         <?php endif; ?>
                         <?php if ($currentPage['title']): ?>
                             <div class="picture-caption"><?= htmlspecialchars($currentPage['title']) ?></div>
                         <?php endif; ?>
                     </div>
-                <?php elseif ($currentPage['kind'] === 'divider'): ?>
+                <?php elseif ($displayKind === 'divider'): ?>
                     <div class="divider-page">
                         <div class="divider-ornament">❦</div>
                         <?php if ($currentPage['title']): ?>
@@ -445,7 +446,7 @@
                     </div>
                 <?php else: ?>
                     <header class="page-header">
-                        <div class="page-kind"><?= ucfirst($currentPage['kind']) ?></div>
+                        <div class="page-kind"><?= ucfirst($displayKind) ?></div>
                         <h1 class="page-title"><?= htmlspecialchars($currentPage['title']) ?></h1>
                         <div class="page-meta">
                             <?= number_format($currentPage['word_count']) ?> words
@@ -453,7 +454,7 @@
                     </header>
                     
                     <div class="page-content">
-                        <?= $currentPage['rendered_content'] ?>
+                        <?= $currentPage['rendered_content'] ?? '' ?>
                     </div>
                 <?php endif; ?>
                 
