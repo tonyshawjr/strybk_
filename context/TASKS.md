@@ -8,13 +8,13 @@
 - [x] Set up README with installation instructions
 - [x] Create context documentation
 - [x] Set up .gitignore
-- [ ] Create database schema SQL files
-- [ ] Build installer wizard (install/index.php)
-- [ ] Implement database connection class
-- [ ] Create basic auth system (login/logout)
-- [ ] Set up config.example.php
-- [ ] Write Playwright tests for installer
-- [ ] Initial git commit and push to main
+- [x] Create database schema SQL files
+- [x] Build installer wizard (install/index.php)
+- [x] Implement database connection class
+- [x] Create basic auth system (login/logout)
+- [x] Set up config.example.php
+- [x] Write Playwright tests for installer
+- [x] Initial git commit and push to main
 
 ## Next (Phase 1 - Milestone 2: Books)
 - [ ] Create library view page
