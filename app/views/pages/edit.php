@@ -90,9 +90,9 @@ include __DIR__ . '/../partials/header.php';
                 <div class="editor-body">
                     <div class="editor-wrapper">
                         <div id="editor" class="content-editor" contenteditable="true">
-                            <?= $page['content'] ?>
+                            <?= $page['content'] ?? '' ?>
                         </div>
-                        <textarea name="content" id="content-textarea" style="display: none;"><?= htmlspecialchars($page['content']) ?></textarea>
+                        <textarea name="content" id="content-textarea" style="display: none;"><?= htmlspecialchars($page['content'] ?? '') ?></textarea>
                     </div>
                 </div>
                 
@@ -246,6 +246,18 @@ include __DIR__ . '/../partials/header.php';
 
 .content-editor p {
     margin: 0 0 16px;
+    line-height: 1.7;
+}
+
+.content-editor strong,
+.content-editor b {
+    font-weight: 700;
+    color: #111111;
+}
+
+.content-editor em,
+.content-editor i {
+    font-style: italic;
 }
 
 .content-editor ul,
@@ -414,11 +426,38 @@ function updateWordCount() {
     document.getElementById('word-count').textContent = words;
 }
 
-// Initialize word count
-updateWordCount();
+// Initialize editor with proper formatting
+document.addEventListener('DOMContentLoaded', function() {
+    const editor = document.getElementById('editor');
+    
+    // If content has HTML tags but they're escaped, unescape them
+    const content = editor.innerHTML;
+    if (content.includes('&lt;') || content.includes('&gt;')) {
+        // Content is escaped HTML, decode it
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = content;
+        editor.innerHTML = textarea.value;
+    }
+    
+    // Ensure proper paragraph handling
+    if (!editor.innerHTML.trim() || editor.innerHTML === '<br>') {
+        editor.innerHTML = '<p><br></p>';
+    }
+    
+    // Initialize word count
+    updateWordCount();
+});
 
 // Update word count on input
-document.getElementById('editor').addEventListener('input', updateWordCount);
+document.getElementById('editor').addEventListener('input', function() {
+    updateWordCount();
+    
+    // Ensure we always have at least one paragraph
+    const editor = this;
+    if (!editor.innerHTML.trim()) {
+        editor.innerHTML = '<p><br></p>';
+    }
+});
 
 // Sync content to hidden textarea before submit
 document.getElementById('page-form').addEventListener('submit', function(e) {
@@ -432,6 +471,7 @@ document.querySelectorAll('.toolbar-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         const command = this.dataset.command;
+        const editor = document.getElementById('editor');
         
         switch(command) {
             case 'bold':
@@ -531,11 +571,26 @@ document.getElementById('page-form').addEventListener('submit', function() {
     localStorage.removeItem('draft-page-' + <?= $page['id'] ?>);
 });
 
-// Keyboard shortcuts
+// Keyboard shortcuts and editor behavior
 document.addEventListener('keydown', function(e) {
-    // Check if we're in the editor
     const editor = document.getElementById('editor');
+    
+    // Check if we're in the editor
     if (!editor.contains(document.activeElement) && document.activeElement !== editor) {
+        return;
+    }
+    
+    // Enter key - insert paragraph break
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.execCommand('insertParagraph', false);
+        return;
+    }
+    
+    // Shift+Enter - insert line break
+    if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        document.execCommand('insertLineBreak', false);
         return;
     }
     
