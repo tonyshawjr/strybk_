@@ -81,7 +81,7 @@ include __DIR__ . '/../partials/header.php';
                 <button class="toolbar-btn" data-command="check" title="Save">
                     <i class="fa-solid fa-check"></i>
                 </button>
-                <span id="save-indicator" style="display: none; color: #10b981; font-size: 14px; margin-left: 8px;">Saved</span>
+                <span id="save-indicator" style="display: none; color: #10b981; font-size: 14px; margin-left: 8px; align-self: center;">Saved</span>
             </div>
         </div>
         
@@ -119,7 +119,7 @@ include __DIR__ . '/../partials/header.php';
                         </div>
                         <div class="last-saved" id="last-saved" style="font-size: 12px; color: #999999; margin-top: 4px;">
                             <?php if (isset($page['updated_at'])): ?>
-                                Last saved: <span id="last-saved-time"><?= date('g:i A', strtotime($page['updated_at'])) ?></span>
+                                Last saved: <span id="last-saved-time"><?= date('M j, g:i A', strtotime($page['updated_at'])) ?></span>
                             <?php else: ?>
                                 <span id="last-saved-time">Not saved yet</span>
                             <?php endif; ?>
@@ -184,6 +184,7 @@ include __DIR__ . '/../partials/header.php';
 
 .toolbar-group {
     display: flex;
+    align-items: center;
     gap: 4px;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
@@ -632,21 +633,27 @@ document.getElementById('page-form').addEventListener('submit', function(e) {
             saveIndicator.style.display = 'inline';
         }
         
-        // Update last saved time
+        // Update last saved time with date
         const now = new Date();
+        const dateString = now.toLocaleDateString('en-US', { 
+            month: 'short',
+            day: 'numeric'
+        });
         const timeString = now.toLocaleTimeString('en-US', { 
             hour: 'numeric', 
             minute: '2-digit',
             hour12: true 
         });
+        const fullTimeString = dateString + ', ' + timeString;
+        
         const lastSavedElement = document.getElementById('last-saved-time');
         if (lastSavedElement) {
-            lastSavedElement.textContent = timeString;
+            lastSavedElement.textContent = fullTimeString;
             
             // Update the parent text if needed
             const lastSavedDiv = document.getElementById('last-saved');
             if (lastSavedDiv && !lastSavedDiv.innerHTML.includes('Last saved:')) {
-                lastSavedDiv.innerHTML = 'Last saved: <span id="last-saved-time">' + timeString + '</span>';
+                lastSavedDiv.innerHTML = 'Last saved: <span id="last-saved-time">' + fullTimeString + '</span>';
             }
         }
         
