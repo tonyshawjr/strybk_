@@ -25,6 +25,27 @@ class ReadController {
     }
     
     /**
+     * Convert number to word format
+     */
+    private function numberToWord(int $number): string {
+        $words = [
+            1 => 'One', 2 => 'Two', 3 => 'Three', 4 => 'Four', 5 => 'Five',
+            6 => 'Six', 7 => 'Seven', 8 => 'Eight', 9 => 'Nine', 10 => 'Ten',
+            11 => 'Eleven', 12 => 'Twelve', 13 => 'Thirteen', 14 => 'Fourteen', 15 => 'Fifteen',
+            16 => 'Sixteen', 17 => 'Seventeen', 18 => 'Eighteen', 19 => 'Nineteen', 20 => 'Twenty',
+            21 => 'Twenty-One', 22 => 'Twenty-Two', 23 => 'Twenty-Three', 24 => 'Twenty-Four', 25 => 'Twenty-Five',
+            26 => 'Twenty-Six', 27 => 'Twenty-Seven', 28 => 'Twenty-Eight', 29 => 'Twenty-Nine', 30 => 'Thirty'
+        ];
+        
+        if (isset($words[$number])) {
+            return $words[$number];
+        }
+        
+        // For numbers above 30, just use the numeric format
+        return (string)$number;
+    }
+    
+    /**
      * Display book reader
      */
     public function show(string $bookSlug, string $pageSlug = ''): void {
@@ -80,19 +101,48 @@ class ReadController {
         }
         
         // Map database kinds to our display kinds and process content
+        $chapterNumber = 0;
         foreach ($pages as &$page) {
             $page['display_kind'] = $this->pageModel->mapKindFromDatabase($page['kind']);
             // For dividers, check if content is empty to distinguish from chapters
             if ($page['kind'] === 'text' && empty(trim($page['content']))) {
                 $page['display_kind'] = 'divider';
             }
+            
+            // Add chapter numbers and calculate word count if needed
+            if ($page['display_kind'] === 'chapter') {
+                $chapterNumber++;
+                $page['chapter_number'] = $chapterNumber;
+                $page['chapter_label'] = 'Chapter ' . $this->numberToWord($chapterNumber);
+                
+                // Calculate word count if not set
+                if (!isset($page['word_count']) || $page['word_count'] == 0) {
+                    // Strip HTML tags and count words
+                    $plainText = strip_tags($page['content'] ?? '');
+                    $plainText = preg_replace('/\s+/', ' ', $plainText);
+                    $page['word_count'] = str_word_count($plainText);
+                }
+            }
         }
         unset($page); // Break the reference to avoid issues
         
-        // Update current page with display kind
+        // Update current page with display kind and chapter info
         $currentPage['display_kind'] = $currentPage['kind'] === 'text' && empty(trim($currentPage['content'])) 
             ? 'divider' 
             : $this->pageModel->mapKindFromDatabase($currentPage['kind']);
+        
+        // Find and set chapter label for current page
+        foreach ($pages as $page) {
+            if ($page['id'] == $currentPage['id']) {
+                if (isset($page['chapter_label'])) {
+                    $currentPage['chapter_label'] = $page['chapter_label'];
+                }
+                if (isset($page['word_count'])) {
+                    $currentPage['word_count'] = $page['word_count'];
+                }
+                break;
+            }
+        }
         
         // Process page content based on type
         if (in_array($currentPage['display_kind'], ['chapter', 'section'])) {

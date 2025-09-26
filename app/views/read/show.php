@@ -617,10 +617,10 @@
                     </div>
                 <?php else: ?>
                     <header class="page-header">
-                        <div class="page-kind"><?= ucfirst($displayKind) ?></div>
+                        <div class="page-kind"><?= isset($currentPage['chapter_label']) ? htmlspecialchars($currentPage['chapter_label']) : ucfirst($displayKind) ?></div>
                         <h1 class="page-title"><?= htmlspecialchars($currentPage['title']) ?></h1>
                         <div class="page-meta">
-                            <?= number_format($currentPage['word_count']) ?> words
+                            <?= number_format($currentPage['word_count'] ?? 0) ?> words • <?= ceil(($currentPage['word_count'] ?? 0) / 200) ?> min read
                         </div>
                     </header>
                     
