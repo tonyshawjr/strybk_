@@ -68,6 +68,18 @@ include __DIR__ . '/../partials/header.php';
                         <i class="fa-regular fa-image"></i>
                     </button>
                 </div>
+                
+                <div class="toolbar-divider"></div>
+                
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" data-command="history" title="History">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </button>
+                    <button class="toolbar-btn" data-command="check" title="Save">
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                    <span id="save-indicator" style="display: none; color: #10b981; font-size: 14px; margin-left: 8px; align-self: center;">Created</span>
+                </div>
             </div>
         </div>
         
@@ -608,6 +620,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'chevrons':
                     document.execCommand('insertText', false, '» ');
                     break;
+                case 'check':
+                    // Trigger the form submit
+                    document.getElementById('page-form').requestSubmit();
+                    break;
+                case 'history':
+                    alert('Version history coming soon');
+                    break;
             }
             
             // Keep focus on editor
@@ -627,6 +646,81 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (kind === 'divider') {
             textarea.value = ''; // Dividers don't have content
         }
+        
+        // Show saving indicator for toolbar save button
+        const toolbarSave = document.querySelector('[data-command="check"]');
+        if (toolbarSave) {
+            toolbarSave.style.color = '#10b981';
+            const saveIndicator = document.getElementById('save-indicator');
+            if (saveIndicator) {
+                saveIndicator.style.display = 'inline';
+                setTimeout(() => {
+                    saveIndicator.style.display = 'none';
+                    toolbarSave.style.color = '';
+                }, 2000);
+            }
+        }
+    });
+    
+    // Handle paste events to convert markdown to HTML
+    editor.addEventListener('paste', function(e) {
+        e.preventDefault();
+        
+        // Get pasted text
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        
+        // Simple markdown to HTML conversion
+        let html = text;
+        
+        // Convert markdown to HTML
+        // Headers
+        html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+        
+        // Bold and italic
+        html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>'); // Bold + Italic
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+        html = html.replace(/___(.*?)___/g, '<strong><em>$1</em></strong>'); // Bold + Italic
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>'); // Bold
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>'); // Italic
+        
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+        
+        // Code blocks
+        html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Blockquotes
+        html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+        
+        // Lists
+        html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
+        html = html.replace(/^(\d+)\. (.*?)$/gm, '<li>$2</li>');
+        
+        // Wrap consecutive list items in ul/ol tags
+        html = html.replace(/(<li>.*?<\/li>\n?)+/g, function(match) {
+            return '<ul>' + match + '</ul>';
+        });
+        
+        // Paragraphs - wrap lines that aren't already wrapped
+        const lines = html.split('\n');
+        const processedLines = lines.map(line => {
+            line = line.trim();
+            if (line && !line.startsWith('<') && !line.endsWith('>')) {
+                return '<p>' + line + '</p>';
+            }
+            return line;
+        });
+        html = processedLines.join('\n');
+        
+        // Clean up empty paragraphs
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        
+        // Insert the converted HTML
+        document.execCommand('insertHTML', false, html);
     });
     
     // Keyboard shortcuts
@@ -660,6 +754,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
             e.preventDefault();
             document.execCommand('italic', false, null);
+        }
+        
+        // Cmd/Ctrl + S to save
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('page-form').requestSubmit();
         }
     });
 });
