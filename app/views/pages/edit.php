@@ -872,70 +872,146 @@ document.getElementById('view-toggle')?.addEventListener('change', function() {
     }
 });
 
+// Helper function to insert markdown in contenteditable
+function insertMarkdown(markdownText, wrapSelection = false, suffix = '') {
+    const editor = document.getElementById('editor');
+    const selection = window.getSelection();
+    
+    if (!selection.rangeCount) {
+        // No selection, just append
+        editor.innerText += markdownText;
+        return;
+    }
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = selection.toString();
+    
+    if (wrapSelection && selectedText) {
+        // Wrap the selected text with markdown
+        const textToInsert = markdownText + selectedText + (suffix || markdownText);
+        document.execCommand('insertText', false, textToInsert);
+    } else {
+        // Insert markdown at cursor position
+        document.execCommand('insertText', false, markdownText);
+    }
+    
+    editor.focus();
+}
+
 // Toolbar button handlers
 document.querySelectorAll('.toolbar-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         const command = this.dataset.command;
         const editor = document.getElementById('editor');
+        const viewToggle = document.getElementById('view-toggle');
+        const isEditMode = viewToggle && viewToggle.checked;
         
-        switch(command) {
-            case 'bold':
-                document.execCommand('bold', false, null);
-                break;
-            case 'italic':
-                document.execCommand('italic', false, null);
-                break;
-            case 'quote':
-                document.execCommand('formatBlock', false, 'blockquote');
-                break;
-            case 'code':
-                // Wrap selection in code tags
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    const code = document.createElement('code');
-                    try {
-                        range.surroundContents(code);
-                    } catch(e) {
-                        // If selection spans multiple elements, insert at cursor
-                        document.execCommand('insertHTML', false, '<code>' + selection.toString() + '</code>');
+        // Check if we're in edit mode (markdown) or view mode (WYSIWYG)
+        if (isEditMode) {
+            // Edit mode - insert markdown syntax
+            switch(command) {
+                case 'bold':
+                    insertMarkdown('**', true);
+                    break;
+                case 'italic':
+                    insertMarkdown('*', true);
+                    break;
+                case 'quote':
+                    insertMarkdown('\n> ');
+                    break;
+                case 'code':
+                    const selection = window.getSelection().toString();
+                    if (selection && selection.includes('\n')) {
+                        // Multi-line code block
+                        insertMarkdown('```\n', true, '\n```');
+                    } else {
+                        // Inline code
+                        insertMarkdown('`', true);
                     }
-                }
-                break;
-            case 'link':
-                const url = prompt('Enter URL:');
-                if (url) {
-                    document.execCommand('createLink', false, url);
-                }
-                break;
-            case 'bullet':
-                document.execCommand('insertUnorderedList', false, null);
-                break;
-            case 'number':
-                document.execCommand('insertOrderedList', false, null);
-                break;
-            case 'image':
-                const imageUrl = prompt('Enter image URL:');
-                if (imageUrl) {
-                    document.execCommand('insertImage', false, imageUrl);
-                }
-                break;
-            case 'check':
-                // Trigger the form submit which will be caught by our AJAX handler
-                document.getElementById('page-form').requestSubmit();
-                break;
-            case 'history':
-                openVersionHistory();
-                break;
-            case 'chevrons':
-                // Custom formatting
-                document.execCommand('insertText', false, '» ');
-                break;
+                    break;
+                case 'link':
+                    const url = prompt('Enter URL:');
+                    if (url) {
+                        const selectedText = window.getSelection().toString();
+                        if (selectedText) {
+                            insertMarkdown(`[${selectedText}](${url})`);
+                        } else {
+                            insertMarkdown(`[link text](${url})`);
+                        }
+                    }
+                    break;
+                case 'bullet':
+                    insertMarkdown('\n- ');
+                    break;
+                case 'number':
+                    insertMarkdown('\n1. ');
+                    break;
+                case 'image':
+                    const imageUrl = prompt('Enter image URL:');
+                    if (imageUrl) {
+                        const altText = prompt('Enter alt text:', 'image');
+                        insertMarkdown(`![${altText}](${imageUrl})`);
+                    }
+                    break;
+                case 'check':
+                    // Trigger the form submit which will be caught by our AJAX handler
+                    document.getElementById('page-form').requestSubmit();
+                    break;
+                case 'history':
+                    openVersionHistory();
+                    break;
+                case 'chevrons':
+                    insertMarkdown('» ');
+                    break;
+            }
+        } else {
+            // View mode - use HTML commands (but editing is disabled anyway)
+            switch(command) {
+                case 'bold':
+                    document.execCommand('bold', false, null);
+                    break;
+                case 'italic':
+                    document.execCommand('italic', false, null);
+                    break;
+                case 'quote':
+                    document.execCommand('formatBlock', false, 'blockquote');
+                    break;
+                case 'code':
+                    document.execCommand('insertHTML', false, '<code>' + window.getSelection().toString() + '</code>');
+                    break;
+                case 'link':
+                    const url = prompt('Enter URL:');
+                    if (url) {
+                        document.execCommand('createLink', false, url);
+                    }
+                    break;
+                case 'bullet':
+                    document.execCommand('insertUnorderedList', false, null);
+                    break;
+                case 'number':
+                    document.execCommand('insertOrderedList', false, null);
+                    break;
+                case 'image':
+                    const imageUrl = prompt('Enter image URL:');
+                    if (imageUrl) {
+                        document.execCommand('insertImage', false, imageUrl);
+                    }
+                    break;
+                case 'check':
+                    document.getElementById('page-form').requestSubmit();
+                    break;
+                case 'history':
+                    openVersionHistory();
+                    break;
+                case 'chevrons':
+                    document.execCommand('insertText', false, '» ');
+                    break;
+            }
         }
         
         // Keep focus on editor
-        document.getElementById('editor').focus();
+        editor.focus();
     });
 });
 
@@ -1059,13 +1135,27 @@ document.addEventListener('keydown', function(e) {
     // Cmd/Ctrl + B for bold
     if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
         e.preventDefault();
-        document.execCommand('bold', false, null);
+        const viewToggle = document.getElementById('view-toggle');
+        const isEditMode = viewToggle && viewToggle.checked;
+        
+        if (isEditMode) {
+            insertMarkdown('**', true);
+        } else {
+            document.execCommand('bold', false, null);
+        }
     }
     
     // Cmd/Ctrl + I for italic
     if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
         e.preventDefault();
-        document.execCommand('italic', false, null);
+        const viewToggle = document.getElementById('view-toggle');
+        const isEditMode = viewToggle && viewToggle.checked;
+        
+        if (isEditMode) {
+            insertMarkdown('*', true);
+        } else {
+            document.execCommand('italic', false, null);
+        }
     }
 });
 // Version History Modal Functions
