@@ -187,8 +187,8 @@ class BookController {
         if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
             $book = $this->bookModel->find($id);
             // Delete old cover if exists
-            if ($book['cover_path'] && file_exists('public' . $book['cover_path'])) {
-                unlink('public' . $book['cover_path']);
+            if ($book['cover_path'] && file_exists(ltrim($book['cover_path'], '/'))) {
+                unlink(ltrim($book['cover_path'], '/'));
             }
             $coverPath = $this->uploadCover($_FILES['cover']);
             $this->bookModel->updateCover($id, $coverPath);
@@ -235,8 +235,8 @@ class BookController {
             $this->bookModel->delete($id);
             
             // Delete cover image if exists
-            if ($book['cover_path'] && file_exists('public' . $book['cover_path'])) {
-                unlink('public' . $book['cover_path']);
+            if ($book['cover_path'] && file_exists(ltrim($book['cover_path'], '/'))) {
+                unlink(ltrim($book['cover_path'], '/'));
             }
             
             flash('Book deleted successfully!', 'success');
@@ -277,7 +277,8 @@ class BookController {
      * Handle cover image upload
      */
     private function uploadCover(array $file): ?string {
-        $uploadDir = 'public/uploads/covers/';
+        // Fix: Use uploads directory directly, not public/uploads
+        $uploadDir = 'uploads/covers/';
         
         // Create directory if it doesn't exist
         if (!is_dir($uploadDir)) {
@@ -297,8 +298,8 @@ class BookController {
             return null;
         }
         
-        // Generate unique filename
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        // Generate unique filename preserving original extension
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $filename = uniqid('cover_') . '.' . $extension;
         $filepath = $uploadDir . $filename;
         
