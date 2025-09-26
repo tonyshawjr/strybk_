@@ -958,7 +958,7 @@ function createVersionHistoryModal() {
         <div class="version-modal-content">
             <div class="version-modal-header">
                 <h2>Version History</h2>
-                <button class="close-modal" onclick="closeVersionHistory()">
+                <button class="close-modal" onclick="window.closeVersionHistory()">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
@@ -1046,14 +1046,14 @@ function displayVersionList(data) {
                     <span>${version.word_count || 0} words</span>
                 </div>
                 <div class="version-actions">
-                    <button class="btn-version-view" onclick="viewVersion(${data.page.id}, ${version.version_number})">
+                    <button class="btn-version-view" onclick="window.viewVersion(${data.page.id}, ${version.version_number})">
                         <i class="fa-solid fa-eye"></i> View
                     </button>
                     ${!isCurrent ? `
-                        <button class="btn-version-compare" onclick="compareWithCurrent(${data.page.id}, ${version.version_number})">
+                        <button class="btn-version-compare" onclick="window.compareWithCurrent(${data.page.id}, ${version.version_number})">
                             <i class="fa-solid fa-code-compare"></i> Compare
                         </button>
-                        <button class="btn-version-restore" onclick="confirmRestore(${data.page.id}, ${version.version_number})">
+                        <button class="btn-version-restore" onclick="window.confirmRestore(${data.page.id}, ${version.version_number})">
                             <i class="fa-solid fa-undo"></i> Restore
                         </button>
                     ` : ''}
@@ -1066,7 +1066,7 @@ function displayVersionList(data) {
     list.innerHTML = html;
 }
 
-function viewVersion(pageId, versionNumber) {
+window.viewVersion = function(pageId, versionNumber) {
     const viewer = document.getElementById('version-viewer');
     const list = document.getElementById('version-list');
     
@@ -1077,7 +1077,7 @@ function viewVersion(pageId, versionNumber) {
             viewer.style.display = 'block';
             viewer.innerHTML = `
                 <div class="version-view-header">
-                    <button class="btn-back" onclick="backToVersionList()">
+                    <button class="btn-back" onclick="window.backToVersionList()">
                         <i class="fa-solid fa-arrow-left"></i> Back to History
                     </button>
                     <div class="version-view-title">
@@ -1171,13 +1171,13 @@ function displayComparison(data) {
                 </div>
             </div>
             <div class="compare-view-toggle">
-                <button class="toggle-btn active" onclick="toggleCompareView('diff', this)">
+                <button class="toggle-btn active" onclick="window.toggleCompareView('diff', this)">
                     <i class="fa-solid fa-code-compare"></i> Diff View
                 </button>
-                <button class="toggle-btn" onclick="toggleCompareView('side', this)">
+                <button class="toggle-btn" onclick="window.toggleCompareView('side', this)">
                     <i class="fa-solid fa-columns"></i> Side by Side
                 </button>
-                <button class="toggle-btn restore-btn" onclick="confirmRestore(${data.page.id}, ${data.version1.version_number})">
+                <button class="toggle-btn restore-btn" onclick="window.confirmRestore(${data.page.id}, ${data.version1.version_number})">
                     <i class="fa-solid fa-clock-rotate-left"></i> Restore Version ${data.version1.version_number}
                 </button>
             </div>
@@ -1221,68 +1221,89 @@ function generateDiffView(oldText, newText) {
 }
 
 function findDifferences(oldText, newText) {
-    // Split by words, keeping spaces
-    const oldWords = oldText.match(/\S+|\s+/g) || [];
-    const newWords = newText.match(/\S+|\s+/g) || [];
+    // More sophisticated word tokenization that handles punctuation properly
+    function tokenize(text) {
+        // Match words, spaces, or punctuation as separate tokens
+        return text.match(/\w+|\s+|[^\w\s]/g) || [];
+    }
+    
+    const oldTokens = tokenize(oldText);
+    const newTokens = tokenize(newText);
     
     let result = '';
     let i = 0, j = 0;
     
-    // Simple word-by-word comparison
-    while (i < oldWords.length || j < newWords.length) {
-        if (i >= oldWords.length) {
-            // New words added at the end
-            result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+    // Use a simple LCS-based approach
+    while (i < oldTokens.length || j < newTokens.length) {
+        if (i >= oldTokens.length) {
+            // Rest of new text
+            result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
             j++;
-        } else if (j >= newWords.length) {
-            // Old words removed from the end
-            result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+        } else if (j >= newTokens.length) {
+            // Rest of old text was removed
+            result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
             i++;
-        } else if (oldWords[i] === newWords[j]) {
-            // Words match
-            result += escapeHtml(oldWords[i]);
+        } else if (oldTokens[i] === newTokens[j]) {
+            // Tokens match
+            result += escapeHtml(oldTokens[i]);
             i++;
             j++;
         } else {
-            // Words differ - check if it's a simple replacement or insertion/deletion
-            // Look ahead to see if we can find a match
-            let oldFoundAt = -1;
-            let newFoundAt = -1;
+            // Tokens differ - look ahead for matches
+            let foundInNew = -1;
+            let foundInOld = -1;
             
-            // Check if old word appears soon in new text
-            for (let k = j + 1; k <= Math.min(j + 3, newWords.length); k++) {
-                if (oldWords[i] === newWords[k]) {
-                    newFoundAt = k;
+            // Look for current old token in upcoming new tokens
+            for (let k = j + 1; k < Math.min(j + 10, newTokens.length); k++) {
+                if (oldTokens[i] === newTokens[k]) {
+                    foundInNew = k;
                     break;
                 }
             }
             
-            // Check if new word appears soon in old text
-            for (let k = i + 1; k <= Math.min(i + 3, oldWords.length); k++) {
-                if (newWords[j] === oldWords[k]) {
-                    oldFoundAt = k;
+            // Look for current new token in upcoming old tokens
+            for (let k = i + 1; k < Math.min(i + 10, oldTokens.length); k++) {
+                if (newTokens[j] === oldTokens[k]) {
+                    foundInOld = k;
                     break;
                 }
             }
             
-            if (newFoundAt > -1 && (oldFoundAt === -1 || newFoundAt - j < oldFoundAt - i)) {
-                // Old word was deleted, new words inserted
-                while (j < newFoundAt) {
-                    result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+            if (foundInNew !== -1 && (foundInOld === -1 || foundInNew - j <= foundInOld - i)) {
+                // Current position to foundInNew are additions
+                while (j < foundInNew) {
+                    result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
                     j++;
                 }
-            } else if (oldFoundAt > -1) {
-                // New word was inserted, old words deleted
-                while (i < oldFoundAt) {
-                    result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+            } else if (foundInOld !== -1) {
+                // Current position to foundInOld are deletions
+                while (i < foundInOld) {
+                    result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
                     i++;
                 }
             } else {
-                // Direct replacement - show old then new
-                result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
-                result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
-                i++;
-                j++;
+                // Simple replacement
+                // Check if this looks like a word change (not whitespace)
+                if (oldTokens[i].trim() && newTokens[j].trim()) {
+                    result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
+                    result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
+                    i++;
+                    j++;
+                } else if (!oldTokens[i].trim()) {
+                    // Old is whitespace, skip it
+                    result += escapeHtml(oldTokens[i]);
+                    i++;
+                } else if (!newTokens[j].trim()) {
+                    // New is whitespace, skip it
+                    result += escapeHtml(newTokens[j]);
+                    j++;
+                } else {
+                    // Default: show both
+                    result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
+                    result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
+                    i++;
+                    j++;
+                }
             }
         }
     }
@@ -1504,7 +1525,7 @@ window.backToVersionList = function() {
 window.confirmRestore = function(pageId, versionNumber) {
     console.log('confirmRestore called with:', pageId, versionNumber);
     if (confirm(`Are you sure you want to restore Version ${versionNumber}? This will create a new version with the content from Version ${versionNumber}.`)) {
-        restoreVersion(pageId, versionNumber);
+        window.restoreVersion(pageId, versionNumber);
     }
 }
 
@@ -1612,11 +1633,7 @@ function formatDate(dateString) {
     });
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+// Remove duplicate escapeHtml - it's defined above
 </script>
 
 <style>
