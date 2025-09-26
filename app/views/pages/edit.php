@@ -15,8 +15,9 @@ include __DIR__ . '/../partials/header.php';
     <div class="editor-container">
         <!-- Editor Toolbar -->
         <div class="editor-toolbar">
-            <div class="toolbar-group">
-                <div class="view-mode-toggle">
+            <div class="editor-toolbar-inner">
+                <div class="toolbar-group">
+                    <div class="view-mode-toggle">
                     <input type="checkbox" id="view-toggle" class="toggle-input" checked>
                     <label for="view-toggle" class="toggle-label">
                         <span class="toggle-icon view-icon">
@@ -82,6 +83,7 @@ include __DIR__ . '/../partials/header.php';
                     <i class="fa-solid fa-check"></i>
                 </button>
                 <span id="save-indicator" style="display: none; color: #10b981; font-size: 14px; margin-left: 8px; align-self: center;">Saved</span>
+            </div>
             </div>
         </div>
         
@@ -173,13 +175,23 @@ include __DIR__ . '/../partials/header.php';
 
 /* Editor Toolbar */
 .editor-toolbar {
-    background: transparent;
-    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 8px 0;
+    border-bottom: 1px solid #F0F0F0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.editor-toolbar-inner {
+    max-width: calc(700px + 120px);
+    margin: 0 auto;
+    padding: 0 60px;
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    border-bottom: 1px solid #F0F0F0;
 }
 
 .toolbar-group {
@@ -190,14 +202,14 @@ include __DIR__ . '/../partials/header.php';
 }
 
 /* Hide formatting tools in view mode */
-.editor-toolbar.view-mode .toolbar-group:not(:first-child) {
+.editor-toolbar.view-mode .editor-toolbar-inner .toolbar-group:not(:first-child) {
     opacity: 0;
     transform: translateY(-10px);
     pointer-events: none;
     display: none;
 }
 
-.editor-toolbar.view-mode .toolbar-divider {
+.editor-toolbar.view-mode .editor-toolbar-inner .toolbar-divider {
     display: none;
 }
 
@@ -300,6 +312,8 @@ include __DIR__ . '/../partials/header.php';
 /* Title Input */
 .editor-title {
     padding: 40px 60px 20px;
+    max-width: calc(700px + 120px); /* Content width + padding */
+    margin: 0 auto;
 }
 
 .title-input {
@@ -322,11 +336,13 @@ include __DIR__ . '/../partials/header.php';
 .editor-body {
     padding: 0 60px 60px;
     min-height: 500px;
+    max-width: calc(700px + 120px); /* Content width + padding */
+    margin: 0 auto;
 }
 
 .editor-wrapper {
     max-width: 700px;
-    margin: 0 auto;
+    margin: 0;
 }
 
 .content-editor {
