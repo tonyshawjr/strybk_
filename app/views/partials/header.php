@@ -61,7 +61,8 @@
         }
         
         .logo:hover {
-            opacity: 0.8;
+            text-decoration: underline;
+            opacity: 1;
         }
         
         .logout-button {
