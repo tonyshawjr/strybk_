@@ -79,12 +79,22 @@ class PageVersion {
      * Get a specific version
      */
     public function getVersion(int $pageId, int $versionNumber): ?array {
-        $sql = "SELECT pv.*, u.name as author_name
+        $sql = "SELECT pv.*, 
+                       u.name as author_name,
+                       DATE_FORMAT(pv.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted,
+                       pv.word_count as word_count
                 FROM page_versions pv
                 LEFT JOIN users u ON pv.user_id = u.id
                 WHERE pv.page_id = ? AND pv.version_number = ?";
         
-        return $this->db->selectOne($sql, [$pageId, $versionNumber]);
+        $result = $this->db->selectOne($sql, [$pageId, $versionNumber]);
+        
+        // Ensure created_at is properly formatted
+        if ($result && !empty($result['created_at_formatted'])) {
+            $result['created_at'] = $result['created_at_formatted'];
+        }
+        
+        return $result;
     }
     
     /**

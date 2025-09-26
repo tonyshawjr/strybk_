@@ -1109,9 +1109,17 @@ function compareWithCurrent(pageId, versionNumber) {
     const modal = document.getElementById('version-history-modal');
     const viewer = document.getElementById('version-viewer');
     const list = document.getElementById('version-list');
+    const loader = document.querySelector('.version-loading');
+    const statsDiv = document.querySelector('.version-stats');
+    const itemsDiv = document.querySelector('.version-items');
     
-    // Hide list, show viewer
+    // Hide all list elements
+    if (loader) loader.style.display = 'none';
+    if (statsDiv) statsDiv.style.display = 'none';
+    if (itemsDiv) itemsDiv.style.display = 'none';
     list.style.display = 'none';
+    
+    // Show viewer
     viewer.style.display = 'block';
     viewer.innerHTML = '<div class="version-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading comparison...</div>';
     
@@ -1227,6 +1235,10 @@ function computeWordDiff(oldWords, newWords) {
     const diff = [];
     let i = 0, j = 0;
     
+    // Filter out empty strings from split result
+    oldWords = oldWords.filter(w => w !== '');
+    newWords = newWords.filter(w => w !== '');
+    
     while (i < oldWords.length || j < newWords.length) {
         if (i >= oldWords.length) {
             // Remaining new words are additions
@@ -1242,43 +1254,30 @@ function computeWordDiff(oldWords, newWords) {
             i++;
             j++;
         } else {
-            // Different - look for next match
-            let foundMatch = false;
+            // Check if this is just a simple word replacement (not a phrase change)
+            // Look for the next matching word within a small window
+            let oldNext = -1;
+            let newNext = -1;
             
-            // Look ahead in new array for current old word
-            for (let k = j + 1; k < Math.min(j + 10, newWords.length); k++) {
-                if (oldWords[i] === newWords[k]) {
-                    // Words j to k-1 are additions
-                    for (let m = j; m < k; m++) {
-                        diff.push({ type: 'added', text: newWords[m] });
-                    }
-                    diff.push({ type: 'unchanged', text: oldWords[i] });
-                    j = k + 1;
-                    i++;
-                    foundMatch = true;
+            // Find next match in a small window (3 words ahead)
+            for (let k = 1; k <= 3; k++) {
+                if (i + k < oldWords.length && j + k < newWords.length && oldWords[i + k] === newWords[j + k]) {
+                    oldNext = i + k;
+                    newNext = j + k;
                     break;
                 }
             }
             
-            if (!foundMatch) {
-                // Look ahead in old array for current new word
-                for (let k = i + 1; k < Math.min(i + 10, oldWords.length); k++) {
-                    if (newWords[j] === oldWords[k]) {
-                        // Words i to k-1 are deletions
-                        for (let m = i; m < k; m++) {
-                            diff.push({ type: 'removed', text: oldWords[m] });
-                        }
-                        diff.push({ type: 'unchanged', text: newWords[j] });
-                        i = k + 1;
-                        j++;
-                        foundMatch = true;
-                        break;
-                    }
+            if (oldNext !== -1 && newNext !== -1 && oldNext - i === newNext - j) {
+                // Same number of words changed - likely a word replacement
+                for (let m = 0; m < oldNext - i; m++) {
+                    diff.push({ type: 'removed', text: oldWords[i + m] });
+                    diff.push({ type: 'added', text: newWords[j + m] });
                 }
-            }
-            
-            if (!foundMatch) {
-                // No match found, one word changed to another
+                i = oldNext;
+                j = newNext;
+            } else {
+                // Just mark this word as changed and continue
                 diff.push({ type: 'removed', text: oldWords[i] });
                 diff.push({ type: 'added', text: newWords[j] });
                 i++;
@@ -1430,9 +1429,16 @@ function toggleCompareView(view, button) {
 function backToVersionList() {
     const viewer = document.getElementById('version-viewer');
     const list = document.getElementById('version-list');
+    const statsDiv = document.querySelector('.version-stats');
+    const itemsDiv = document.querySelector('.version-items');
     
+    // Hide viewer
     viewer.style.display = 'none';
+    
+    // Show list elements
     list.style.display = 'block';
+    if (statsDiv) statsDiv.style.display = 'flex';
+    if (itemsDiv) itemsDiv.style.display = 'block';
 }
 
 function confirmRestore(pageId, versionNumber) {
