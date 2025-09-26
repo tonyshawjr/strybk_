@@ -649,6 +649,9 @@ document.querySelectorAll('.toolbar-btn').forEach(btn => {
                 }
                 break;
             case 'check':
+                // Sync content to textarea first, then submit
+                const textarea = document.getElementById('content-textarea');
+                textarea.value = editor.innerHTML;
                 document.getElementById('page-form').submit();
                 break;
             case 'history':
