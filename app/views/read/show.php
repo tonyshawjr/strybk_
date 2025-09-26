@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title><?= htmlspecialchars($title) ?> - Strybk</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -648,17 +651,17 @@
                 <?php endif; ?>
                 
                 <!-- Page Navigation -->
+                <?php if ($nextPage): ?>
                 <nav class="page-navigation">
-                    <?php if ($nextPage): ?>
-                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button next-with-title">
-                            <span class="next-label">
-                                <span class="next-prefix">NEXT:</span>
-                                <span class="next-title"><?= htmlspecialchars($nextPage['title']) ?></span>
-                            </span>
-                            <span class="next-arrow">→</span>
-                        </a>
-                    <?php endif; ?>
+                    <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button next-with-title">
+                        <span class="next-label">
+                            <span class="next-prefix">NEXT:</span>
+                            <span class="next-title"><?= htmlspecialchars($nextPage['title']) ?></span>
+                        </span>
+                        <span class="next-arrow">→</span>
+                    </a>
                 </nav>
+                <?php endif; ?>
             </article>
         </main>
     </div>
