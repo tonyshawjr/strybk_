@@ -38,10 +38,7 @@
             <div class="book-card">
                 <div class="book-cover add-book-cover">
                     <div class="add-book-icon">
-                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="24" cy="24" r="20"/>
-                            <path d="M24 16v16M16 24h16"/>
-                        </svg>
+                        <i class="fa-solid fa-plus fa-2x"></i>
                     </div>
                 </div>
                 <div class="book-meta">
@@ -203,6 +200,7 @@ function getBookColor($title) {
 .add-book-icon {
     color: #CCCCCC;
     transition: color 0.2s ease;
+    font-size: 48px;
 }
 
 .add-book-card:hover .add-book-icon {

@@ -25,7 +25,6 @@ class Router {
         $this->routes['POST']['/logout'] = 'AuthController@logout';
         
         // Protected routes
-        $this->routes['GET']['/dashboard'] = 'DashboardController@index';
         $this->routes['GET']['/books'] = 'BookController@index';
         $this->routes['GET']['/books/new'] = 'BookController@create';
         $this->routes['POST']['/books'] = 'BookController@store';

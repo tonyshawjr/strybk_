@@ -33,15 +33,9 @@ include __DIR__ . '/../partials/header.php';
                             data-current="<?= $book['is_public'] ? 'public' : 'private' ?>">
                         <span class="toggle-icon">
                             <?php if ($book['is_public']): ?>
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="8" cy="8" r="7"/>
-                                    <circle cx="8" cy="8" r="3"/>
-                                </svg>
+                                <i class="fa-regular fa-eye"></i>
                             <?php else: ?>
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="7" width="10" height="7" rx="1"/>
-                                    <path d="M5 7V5a3 3 0 016 0v2"/>
-                                </svg>
+                                <i class="fa-solid fa-lock"></i>
                             <?php endif; ?>
                         </span>
                         <span class="toggle-text"><?= $book['is_public'] ? 'Public' : 'Private' ?></span>
@@ -51,10 +45,7 @@ include __DIR__ . '/../partials/header.php';
                         <div class="public-link">
                             <input type="text" readonly value="<?= htmlspecialchars($_SERVER['HTTP_HOST'] . '/read/' . $book['slug']) ?>" class="link-input">
                             <button class="copy-link" onclick="copyLink(this)">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="5" y="5" width="9" height="9" rx="1"/>
-                                    <path d="M2 2h7v7"/>
-                                </svg>
+                                <i class="fa-regular fa-copy"></i>
                             </button>
                         </div>
                     <?php endif; ?>
@@ -63,21 +54,13 @@ include __DIR__ . '/../partials/header.php';
                 <!-- Book Actions -->
                 <div class="book-actions">
                     <button class="btn-icon" onclick="editBookDetails()" title="Edit details">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 2l2 2L4 13l-3 1 1-3 9-9z"/>
-                        </svg>
+                        <i class="fa-regular fa-pen-to-square"></i>
                     </button>
                     <button class="btn-icon" onclick="shareBook()" title="Share">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M8 12v-8m-4 4l4-4 4 4"/>
-                            <rect x="2" y="13" width="12" height="1"/>
-                        </svg>
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
                     </button>
                     <button class="btn-icon" onclick="exportBook()" title="Export">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M8 11V3m0 8l-3-3m3 3l3-3"/>
-                            <path d="M3 14h10"/>
-                        </svg>
+                        <i class="fa-solid fa-file-export"></i>
                     </button>
                 </div>
             </div>
@@ -88,33 +71,19 @@ include __DIR__ . '/../partials/header.php';
             <div class="pages-header">
                 <div class="view-toggle">
                     <button class="view-btn active" data-view="gallery">
-                        <svg width="16" height="16" fill="currentColor">
-                            <rect x="1" y="1" width="5" height="5"/>
-                            <rect x="9" y="1" width="5" height="5"/>
-                            <rect x="1" y="9" width="5" height="5"/>
-                            <rect x="9" y="9" width="5" height="5"/>
-                        </svg>
+                        <i class="fa-solid fa-grip"></i>
                     </button>
                     <button class="view-btn" data-view="list">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="1" y1="3" x2="15" y2="3"/>
-                            <line x1="1" y1="8" x2="15" y2="8"/>
-                            <line x1="1" y1="13" x2="15" y2="13"/>
-                        </svg>
+                        <i class="fa-solid fa-list"></i>
                     </button>
                 </div>
                 
                 <div class="pages-actions">
                     <a href="/books/<?= $book['id'] ?>/pages/new" class="add-page-btn">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="10" cy="10" r="9"/>
-                            <path d="M10 6v8m-4-4h8"/>
-                        </svg>
+                        <i class="fa-solid fa-plus"></i>
                     </a>
                     <button class="minimize-btn">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 15h10"/>
-                        </svg>
+                        <i class="fa-solid fa-minus"></i>
                     </button>
                 </div>
             </div>
@@ -643,34 +612,21 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
     
     // Update icon
     if (newStatus === 'public') {
-        this.querySelector('.toggle-icon').innerHTML = `
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="8" cy="8" r="7"/>
-                <circle cx="8" cy="8" r="3"/>
-            </svg>
-        `;
+        this.querySelector('.toggle-icon').innerHTML = `<i class="fa-regular fa-eye"></i>`;
         // Show public link
         if (!document.querySelector('.public-link')) {
             const linkHtml = `
                 <div class="public-link">
                     <input type="text" readonly value="${window.location.host}/read/<?= $book['slug'] ?>" class="link-input">
                     <button class="copy-link" onclick="copyLink(this)">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="5" y="5" width="9" height="9" rx="1"/>
-                            <path d="M2 2h7v7"/>
-                        </svg>
+                        <i class="fa-regular fa-copy"></i>
                     </button>
                 </div>
             `;
             this.parentElement.insertAdjacentHTML('beforeend', linkHtml);
         }
     } else {
-        this.querySelector('.toggle-icon').innerHTML = `
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="7" width="10" height="7" rx="1"/>
-                <path d="M5 7V5a3 3 0 016 0v2"/>
-            </svg>
-        `;
+        this.querySelector('.toggle-icon').innerHTML = `<i class="fa-solid fa-lock"></i>`;
         // Hide public link
         document.querySelector('.public-link')?.remove();
     }

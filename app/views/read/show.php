@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?> - Strybk</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         :root {
             --purple: #6C4AB6;
@@ -506,9 +508,7 @@
                 </nav>
                 <div class="reader-controls">
                     <button class="toggle-toc" id="toggle-toc" title="Toggle Table of Contents">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 12h18M3 6h18M3 18h18"/>
-                        </svg>
+                        <i class="fa-solid fa-bars"></i>
                     </button>
                     
                     <div class="progress-bar">
@@ -563,16 +563,12 @@
                 <nav class="page-navigation">
                     <?php if ($prevPage): ?>
                         <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($prevPage['slug']) ?>" class="nav-button">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M15 18l-6-6 6-6"/>
-                            </svg>
+                            <i class="fa-solid fa-chevron-left"></i>
                             Previous
                         </a>
                     <?php else: ?>
                         <span class="nav-button disabled">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M15 18l-6-6 6-6"/>
-                            </svg>
+                            <i class="fa-solid fa-chevron-left"></i>
                             Previous
                         </span>
                     <?php endif; ?>
@@ -580,16 +576,12 @@
                     <?php if ($nextPage): ?>
                         <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button">
                             Next
-                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 18l6-6-6-6"/>
-                            </svg>
+                            <i class="fa-solid fa-chevron-right"></i>
                         </a>
                     <?php else: ?>
                         <span class="nav-button disabled">
                             Next
-                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 18l6-6-6-6"/>
-                            </svg>
+                            <i class="fa-solid fa-chevron-right"></i>
                         </span>
                     <?php endif; ?>
                 </nav>
