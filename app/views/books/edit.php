@@ -1,398 +1,718 @@
-<?php include __DIR__ . '/../partials/header.php'; ?>
+<?php 
+$showBackButton = true;
+include __DIR__ . '/../partials/header.php'; 
+?>
 
 <div class="container">
-    <div class="page-header">
-        <h1><?= htmlspecialchars($book['title']) ?></h1>
-    </div>
-
-    <div class="edit-layout">
-        <div class="edit-sidebar">
-            <div class="book-meta">
-                <h2>Book Settings</h2>
-                <form method="POST" action="/books/<?= $book['id'] ?>/update" enctype="multipart/form-data">
-                    <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-                    
-                    <div class="form-group">
-                        <label for="title">Title</label>
-                        <input type="text" id="title" name="title" required 
-                               value="<?= htmlspecialchars($book['title']) ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="subtitle">Subtitle</label>
-                        <input type="text" id="subtitle" name="subtitle" 
-                               value="<?= htmlspecialchars($book['subtitle'] ?? '') ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="author">Author</label>
-                        <input type="text" id="author" name="author" 
-                               value="<?= htmlspecialchars($book['author'] ?? '') ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cover">Cover Image</label>
-                        <?php if ($book['cover_path']): ?>
-                            <div class="current-cover">
-                                <img src="<?= htmlspecialchars($book['cover_path']) ?>" alt="Current cover">
-                            </div>
+    <div class="book-detail">
+        <!-- Book Info Section -->
+        <div class="book-info">
+            <?php if ($book['cover_path']): ?>
+                <div class="book-cover-display">
+                    <img src="<?= htmlspecialchars($book['cover_path']) ?>" alt="<?= htmlspecialchars($book['title']) ?>">
+                </div>
+            <?php else: ?>
+                <div class="book-cover-display" style="background: <?= getBookColor($book['title']) ?>">
+                    <div class="book-cover-content">
+                        <h2><?= htmlspecialchars($book['title']) ?></h2>
+                        <?php if ($book['subtitle']): ?>
+                            <p><?= htmlspecialchars($book['subtitle']) ?></p>
                         <?php endif; ?>
-                        <input type="file" id="cover" name="cover" accept="image/jpeg,image/jpg,image/png,image/webp">
-                        <p class="help-text">Upload new image to replace current cover</p>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="is_public" value="1" <?= $book['is_public'] ? 'checked' : '' ?>>
-                            <span>Make this book public</span>
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-block">Update Book</button>
-                </form>
+                </div>
+            <?php endif; ?>
+            
+            <div class="book-meta-section">
+                <h1 class="book-title-display"><?= htmlspecialchars($book['title']) ?></h1>
+                <p class="book-author-display"><?= htmlspecialchars($book['author'] ?? '37signals') ?></p>
                 
-                <hr class="divider">
+                <!-- Privacy Toggle -->
+                <div class="privacy-toggle-container">
+                    <button class="privacy-toggle <?= $book['is_public'] ? 'public' : 'private' ?>" 
+                            data-book-id="<?= $book['id'] ?>" 
+                            data-current="<?= $book['is_public'] ? 'public' : 'private' ?>">
+                        <span class="toggle-icon">
+                            <?php if ($book['is_public']): ?>
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="8" cy="8" r="7"/>
+                                    <circle cx="8" cy="8" r="3"/>
+                                </svg>
+                            <?php else: ?>
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="7" width="10" height="7" rx="1"/>
+                                    <path d="M5 7V5a3 3 0 016 0v2"/>
+                                </svg>
+                            <?php endif; ?>
+                        </span>
+                        <span class="toggle-text"><?= $book['is_public'] ? 'Public' : 'Private' ?></span>
+                    </button>
+                    
+                    <?php if ($book['is_public']): ?>
+                        <div class="public-link">
+                            <input type="text" readonly value="<?= htmlspecialchars($_SERVER['HTTP_HOST'] . '/read/' . $book['slug']) ?>" class="link-input">
+                            <button class="copy-link" onclick="copyLink(this)">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="5" y="5" width="9" height="9" rx="1"/>
+                                    <path d="M2 2h7v7"/>
+                                </svg>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                </div>
                 
-                <div class="danger-zone">
-                    <h3>Danger Zone</h3>
-                    <form method="POST" action="/books/<?= $book['id'] ?>/delete" 
-                          onsubmit="return confirm('Are you sure? This will delete the book and all its pages.')">
-                        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-                        <button type="submit" class="btn btn-danger btn-block">Delete Book</button>
-                    </form>
+                <!-- Book Actions -->
+                <div class="book-actions">
+                    <button class="btn-icon" onclick="editBookDetails()" title="Edit details">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 2l2 2L4 13l-3 1 1-3 9-9z"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" onclick="shareBook()" title="Share">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 12v-8m-4 4l4-4 4 4"/>
+                            <rect x="2" y="13" width="12" height="1"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" onclick="exportBook()" title="Export">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 11V3m0 8l-3-3m3 3l3-3"/>
+                            <path d="M3 14h10"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
         
-        <div class="edit-main">
-            <div class="pages-section">
-                <div class="section-header">
-                    <h2>Pages</h2>
-                    <a href="/books/<?= $book['id'] ?>/pages/new" class="btn btn-primary">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14"/>
+        <!-- Pages/Chapters Section -->
+        <div class="pages-section">
+            <div class="pages-header">
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="gallery">
+                        <svg width="16" height="16" fill="currentColor">
+                            <rect x="1" y="1" width="5" height="5"/>
+                            <rect x="9" y="1" width="5" height="5"/>
+                            <rect x="1" y="9" width="5" height="5"/>
+                            <rect x="9" y="9" width="5" height="5"/>
                         </svg>
-                        Add Page
-                    </a>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="1" y1="3" x2="15" y2="3"/>
+                            <line x1="1" y1="8" x2="15" y2="8"/>
+                            <line x1="1" y1="13" x2="15" y2="13"/>
+                        </svg>
+                    </button>
                 </div>
                 
-                <?php if (empty($pages)): ?>
-                    <div class="empty-pages">
-                        <p>No pages yet. Add your first page to start writing!</p>
-                    </div>
-                <?php else: ?>
-                    <div class="pages-list" id="pages-list">
-                        <?php foreach ($pages as $page): ?>
-                            <?php 
-                            // Map database kinds to display values
-                            $displayKind = $page['kind'];
-                            if ($displayKind === 'text') $displayKind = 'chapter';
-                            ?>
-                            <div class="page-item" data-id="<?= $page['id'] ?>">
-                                <div class="drag-handle">
-                                    <svg width="20" height="20" fill="currentColor">
-                                        <circle cx="6" cy="10" r="1.5"/>
-                                        <circle cx="6" cy="14" r="1.5"/>
-                                        <circle cx="14" cy="10" r="1.5"/>
-                                        <circle cx="14" cy="14" r="1.5"/>
-                                    </svg>
-                                </div>
-                                
-                                <div class="page-info">
-                                    <h4><?= htmlspecialchars($page['title']) ?></h4>
-                                    <span class="page-meta">
-                                        <?= ucfirst($displayKind) ?> • 
-                                        <?= number_format($page['word_count']) ?> words
-                                    </span>
-                                </div>
-                                
-                                <div class="page-actions">
-                                    <a href="/pages/<?= $page['id'] ?>/edit" class="btn btn-sm">Edit</a>
-                                    <form method="POST" action="/pages/<?= $page['id'] ?>/delete" class="inline-form">
-                                        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-                                        <button type="submit" class="btn btn-sm btn-ghost" 
-                                                onclick="return confirm('Delete this page?')">Delete</button>
-                                    </form>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                <div class="pages-actions">
+                    <a href="/books/<?= $book['id'] ?>/pages/new" class="add-page-btn">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="10" cy="10" r="9"/>
+                            <path d="M10 6v8m-4-4h8"/>
+                        </svg>
+                    </a>
+                    <button class="minimize-btn">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 15h10"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             
-            <div class="book-preview">
-                <h3>Preview</h3>
-                <a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="btn btn-secondary">
-                    View Book
-                </a>
-                <?php if ($book['is_public']): ?>
-                    <p class="help-text">Public URL: /read/<?= htmlspecialchars($book['slug']) ?></p>
-                <?php endif; ?>
+            <!-- Gallery View -->
+            <div id="gallery-view" class="pages-view gallery-view active">
+                <div class="pages-grid" id="pages-grid">
+                    <?php foreach ($pages as $page): ?>
+                        <div class="page-card" data-id="<?= $page['id'] ?>">
+                            <div class="page-thumbnail">
+                                <div class="page-content-preview">
+                                    <h3><?= htmlspecialchars($page['title']) ?></h3>
+                                    <p><?= htmlspecialchars(substr(strip_tags($page['content'] ?? ''), 0, 100)) ?>...</p>
+                                </div>
+                            </div>
+                            <div class="page-info">
+                                <h4><?= htmlspecialchars($page['title']) ?></h4>
+                                <span class="word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <!-- List View -->
+            <div id="list-view" class="pages-view list-view">
+                <div class="pages-list" id="pages-list">
+                    <div class="list-header">
+                        <span class="chapter-indicator">Welcome</span>
+                        <span class="word-count-header">134 words</span>
+                    </div>
+                    <?php foreach ($pages as $index => $page): ?>
+                        <div class="page-list-item <?= $index === 0 ? 'active' : '' ?>" data-id="<?= $page['id'] ?>">
+                            <span class="page-title"><?= htmlspecialchars($page['title']) ?></span>
+                            <span class="page-word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
+                        </div>
+                    <?php endforeach; ?>
+                    
+                    <?php if (count($pages) > 10): ?>
+                        <div class="list-section">
+                            <h5>Appendix</h5>
+                            <!-- Additional pages go here -->
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<?php
+// Generate consistent colors for book covers based on title
+function getBookColor($title) {
+    $colors = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    ];
+    $hash = crc32($title);
+    $index = abs($hash) % count($colors);
+    return $colors[$index];
+}
+?>
+
 <style>
-.edit-layout {
+/* Book Detail Layout */
+.book-detail {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 2rem;
-    margin-top: 2rem;
+    grid-template-columns: 400px 1fr;
+    gap: 60px;
+    padding: 40px 0;
 }
 
-.edit-sidebar {
+/* Book Info Section */
+.book-info {
     position: sticky;
-    top: 2rem;
+    top: 40px;
     height: fit-content;
 }
 
-.book-meta {
-    background: white;
-    padding: 1.5rem;
+.book-cover-display {
+    width: 256px;
+    height: 340px;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 24px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.book-meta h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.25rem;
-}
-
-.current-cover {
-    margin-bottom: 1rem;
-}
-
-.current-cover img {
+.book-cover-display img {
     width: 100%;
-    border-radius: 6px;
+    height: 100%;
+    object-fit: cover;
 }
 
-.btn-block {
-    width: 100%;
-}
-
-.divider {
-    margin: 2rem 0;
-    border: none;
-    border-top: 1px solid #e5e7eb;
-}
-
-.danger-zone h3 {
-    color: #dc2626;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-}
-
-.btn-danger {
-    background: #dc2626;
+.book-cover-content {
+    text-align: center;
+    padding: 24px;
     color: white;
 }
 
-.btn-danger:hover {
-    background: #b91c1c;
+.book-cover-content h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
-.pages-section {
+.book-title-display {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111111;
+    margin: 0 0 8px 0;
+}
+
+.book-author-display {
+    font-size: 18px;
+    color: #666666;
+    margin: 0 0 24px 0;
+}
+
+/* Privacy Toggle */
+.privacy-toggle-container {
+    margin-bottom: 24px;
+}
+
+.privacy-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #E5E5E5;
+    border-radius: 20px;
     background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.section-header {
+.privacy-toggle.public {
+    background: #E8F5E9;
+    border-color: #4CAF50;
+    color: #2E7D32;
+}
+
+.privacy-toggle.private {
+    background: #FFF3E0;
+    border-color: #FF9800;
+    color: #E65100;
+}
+
+.public-link {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.link-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #E5E5E5;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #666666;
+    background: #FAFAFA;
+}
+
+.copy-link {
+    padding: 8px;
+    border: 1px solid #E5E5E5;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-link:hover {
+    background: #F5F5F5;
+}
+
+/* Book Actions */
+.book-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E5E5E5;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: #F5F5F5;
+    border-color: #111111;
+}
+
+/* Pages Section */
+.pages-section {
+    min-height: 600px;
+}
+
+.pages-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 24px;
 }
 
-.section-header h2 {
-    margin: 0;
-}
-
-.empty-pages {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #6b7280;
-}
-
-.pages-list {
+.view-toggle {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    gap: 4px;
+    padding: 4px;
+    background: #F5F5F5;
+    border-radius: 6px;
 }
 
-.page-item {
+.view-btn {
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f9fafb;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #999999;
+}
+
+.view-btn.active {
+    background: white;
+    color: #111111;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pages-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.add-page-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #4A90E2;
+    border-radius: 50%;
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.add-page-btn:hover {
+    background: #357ABD;
+    transform: scale(1.05);
+}
+
+.minimize-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E5E5E5;
+    background: white;
     border-radius: 6px;
-    transition: background 0.2s;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.page-item:hover {
-    background: #f3f4f6;
+.minimize-btn:hover {
+    background: #F5F5F5;
 }
 
-.drag-handle {
-    color: #9ca3af;
+/* Gallery View */
+.pages-view {
+    display: none;
+}
+
+.pages-view.active {
+    display: block;
+}
+
+.pages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 24px;
+}
+
+.page-card {
     cursor: move;
 }
 
-.page-info {
-    flex: 1;
+.page-thumbnail {
+    aspect-ratio: 3/4;
+    background: white;
+    border: 1px solid #E5E5E5;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.page-card:hover .page-thumbnail {
+    border-color: #111111;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.page-content-preview {
+    font-size: 8px;
+    line-height: 1.4;
+    color: #666666;
+}
+
+.page-content-preview h3 {
+    font-size: 10px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #111111;
 }
 
 .page-info h4 {
-    margin: 0 0 0.25rem 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111111;
+    margin: 0 0 4px 0;
 }
 
-.page-meta {
-    font-size: 0.875rem;
-    color: #6b7280;
+.word-count {
+    font-size: 12px;
+    color: #999999;
 }
 
-.page-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.book-preview {
+/* List View */
+.list-view {
     background: white;
-    padding: 1.5rem;
+    border: 1px solid #E5E5E5;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin-top: 1.5rem;
+    overflow: hidden;
 }
 
-.book-preview h3 {
-    margin: 0 0 1rem 0;
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #FAFAFA;
+    border-bottom: 1px solid #E5E5E5;
+    font-weight: 600;
+    color: #111111;
 }
 
-@media (max-width: 768px) {
-    .edit-layout {
-        grid-template-columns: 1fr;
-    }
-    
-    .edit-sidebar {
-        position: static;
-    }
+.page-list-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid #F0F0F0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-list-item:hover {
+    background: #FAFAFA;
+}
+
+.page-list-item.active {
+    background: #FFF9E6;
+    border-left: 3px solid #FFA500;
+}
+
+.page-title {
+    color: #111111;
+    font-size: 14px;
+}
+
+.page-word-count {
+    color: #999999;
+    font-size: 14px;
+}
+
+.list-section {
+    margin-top: 24px;
+}
+
+.list-section h5 {
+    padding: 12px 20px;
+    background: #FAFAFA;
+    border-top: 1px solid #E5E5E5;
+    border-bottom: 1px solid #E5E5E5;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111111;
+    margin: 0;
 }
 
 /* Sortable styles */
 .sortable-ghost {
     opacity: 0.4;
-    background: #f0f0f0;
 }
 
 .sortable-drag {
-    opacity: 0.9;
-    background: white;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    opacity: 0.8;
 }
 
-.drag-handle {
-    cursor: move;
+/* Responsive */
+@media (max-width: 1024px) {
+    .book-detail {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    
+    .book-info {
+        position: static;
+        display: flex;
+        gap: 32px;
+        align-items: flex-start;
+    }
+    
+    .book-cover-display {
+        width: 200px;
+        height: 266px;
+    }
 }
 
-.drag-handle:hover {
-    color: var(--purple);
-}
-
-.reorder-status {
-    padding: 0.5rem 1rem;
-    background: #d1fae5;
-    color: #065f46;
-    border-radius: 6px;
-    margin-top: 1rem;
-    display: none;
-}
-
-.reorder-status.error {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.reorder-status.show {
-    display: block;
+@media (max-width: 768px) {
+    .book-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .pages-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 16px;
+    }
 }
 </style>
 
-<!-- SortableJS -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const pagesList = document.getElementById('pages-list');
-    
-    if (pagesList) {
-        // Initialize SortableJS
-        const sortable = Sortable.create(pagesList, {
-            handle: '.drag-handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            onEnd: function(evt) {
-                // Get the new order of page IDs
-                const pageItems = pagesList.querySelectorAll('.page-item');
-                const pageIds = Array.from(pageItems).map(item => item.dataset.id);
-                
-                // Send AJAX request to update order
-                updatePageOrder(pageIds);
-            }
-        });
-    }
-    
-    function updatePageOrder(pageIds) {
-        const formData = new FormData();
-        formData.append('_token', '<?= $auth->csrfToken() ?>');
-        pageIds.forEach((id, index) => {
-            formData.append('page_ids[]', id);
-        });
+// View Toggle
+document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const view = this.dataset.view;
         
-        fetch('/books/<?= $book['id'] ?>/pages/reorder', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showStatus('Pages reordered successfully!', 'success');
-            } else {
-                showStatus('Error reordering pages. Please try again.', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showStatus('Error reordering pages. Please try again.', 'error');
-        });
-    }
-    
-    function showStatus(message, type) {
-        // Check if status element exists, if not create it
-        let statusEl = document.querySelector('.reorder-status');
-        if (!statusEl) {
-            statusEl = document.createElement('div');
-            statusEl.className = 'reorder-status';
-            const pagesSection = document.querySelector('.pages-section');
-            pagesSection.appendChild(statusEl);
-        }
+        // Update active button
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
         
-        statusEl.textContent = message;
-        statusEl.className = 'reorder-status show';
-        if (type === 'error') {
-            statusEl.classList.add('error');
-        }
-        
-        // Hide after 3 seconds
-        setTimeout(() => {
-            statusEl.classList.remove('show');
-        }, 3000);
-    }
+        // Update active view
+        document.querySelectorAll('.pages-view').forEach(v => v.classList.remove('active'));
+        document.getElementById(view + '-view').classList.add('active');
+    });
 });
+
+// Initialize SortableJS for both views
+const galleryGrid = document.getElementById('pages-grid');
+if (galleryGrid) {
+    Sortable.create(galleryGrid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        onEnd: function(evt) {
+            updatePageOrder();
+        }
+    });
+}
+
+const pagesList = document.getElementById('pages-list');
+if (pagesList) {
+    Sortable.create(pagesList, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        filter: '.list-header, .list-section',
+        onEnd: function(evt) {
+            updatePageOrder();
+        }
+    });
+}
+
+// Update page order via AJAX
+function updatePageOrder() {
+    const pageIds = [];
+    document.querySelectorAll('.page-card, .page-list-item').forEach(item => {
+        if (item.dataset.id) {
+            pageIds.push(item.dataset.id);
+        }
+    });
+    
+    fetch('/books/<?= $book['id'] ?>/pages/reorder', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= $auth->csrfToken() ?>'
+        },
+        body: JSON.stringify({ page_ids: pageIds })
+    });
+}
+
+// Privacy toggle
+document.querySelector('.privacy-toggle')?.addEventListener('click', function() {
+    const bookId = this.dataset.bookId;
+    const current = this.dataset.current;
+    const newStatus = current === 'public' ? 'private' : 'public';
+    
+    // Update UI optimistically
+    this.classList.toggle('public');
+    this.classList.toggle('private');
+    this.dataset.current = newStatus;
+    this.querySelector('.toggle-text').textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+    
+    // Update icon
+    if (newStatus === 'public') {
+        this.querySelector('.toggle-icon').innerHTML = `
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="8" cy="8" r="7"/>
+                <circle cx="8" cy="8" r="3"/>
+            </svg>
+        `;
+        // Show public link
+        if (!document.querySelector('.public-link')) {
+            const linkHtml = `
+                <div class="public-link">
+                    <input type="text" readonly value="${window.location.host}/read/<?= $book['slug'] ?>" class="link-input">
+                    <button class="copy-link" onclick="copyLink(this)">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="5" y="5" width="9" height="9" rx="1"/>
+                            <path d="M2 2h7v7"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            this.parentElement.insertAdjacentHTML('beforeend', linkHtml);
+        }
+    } else {
+        this.querySelector('.toggle-icon').innerHTML = `
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="7" width="10" height="7" rx="1"/>
+                <path d="M5 7V5a3 3 0 016 0v2"/>
+            </svg>
+        `;
+        // Hide public link
+        document.querySelector('.public-link')?.remove();
+    }
+    
+    // Send update to server
+    fetch('/books/' + bookId + '/visibility', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-Token': '<?= $auth->csrfToken() ?>'
+        }
+    });
+});
+
+// Copy link function
+function copyLink(button) {
+    const input = button.previousElementSibling;
+    input.select();
+    document.execCommand('copy');
+    
+    // Visual feedback
+    button.style.background = '#4CAF50';
+    button.style.borderColor = '#4CAF50';
+    button.style.color = 'white';
+    setTimeout(() => {
+        button.style.background = '';
+        button.style.borderColor = '';
+        button.style.color = '';
+    }, 1000);
+}
+
+// Placeholder functions
+function editBookDetails() {
+    alert('Edit book details modal coming soon');
+}
+
+function shareBook() {
+    alert('Share functionality coming soon');
+}
+
+function exportBook() {
+    alert('Export functionality coming soon');
+}
 </script>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>

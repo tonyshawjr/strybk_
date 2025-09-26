@@ -85,6 +85,23 @@
             display: inline;
         }
         
+        .back-button {
+            position: absolute;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+            color: #111111;
+        }
+        
+        .back-button:hover {
+            background: #F5F5F5;
+        }
+        
         /* Container override */
         .container {
             max-width: 1280px;
@@ -140,6 +157,13 @@
     <div class="page-container">
         <header class="header">
             <div class="header-content">
+                <?php if (isset($showBackButton) && $showBackButton): ?>
+                    <a href="/books" class="back-button">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                <?php endif; ?>
                 <a href="/books" class="logo">strybk</a>
                 <form method="POST" action="/logout" class="logout-form">
                     <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
