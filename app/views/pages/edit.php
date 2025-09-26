@@ -1210,7 +1210,7 @@ function generateDiffView(oldText, newText) {
         return '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
     }
     
-    // Use a simpler approach - find the longest common subsequence
+    // Use a simpler approach - find the differences
     const result = findDifferences(oldClean, newClean);
     
     let diffHtml = '<div class="diff-container"><div class="diff-text">';
@@ -1221,86 +1221,129 @@ function generateDiffView(oldText, newText) {
 }
 
 function findDifferences(oldText, newText) {
-    // More sophisticated word tokenization that handles punctuation properly
-    function tokenize(text) {
-        // Match words, spaces, or punctuation as separate tokens
-        return text.match(/\w+|\s+|[^\w\s]/g) || [];
+    // Split text into words while preserving whitespace
+    function getWords(text) {
+        // This will split on word boundaries but keep the words intact
+        const words = [];
+        let currentWord = '';
+        let inWord = false;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const isWordChar = /[a-zA-Z0-9']/.test(char);
+            
+            if (isWordChar) {
+                if (!inWord && currentWord) {
+                    // Push non-word characters
+                    words.push(currentWord);
+                    currentWord = '';
+                }
+                currentWord += char;
+                inWord = true;
+            } else {
+                if (inWord && currentWord) {
+                    // Push word
+                    words.push(currentWord);
+                    currentWord = '';
+                }
+                currentWord += char;
+                inWord = false;
+            }
+        }
+        
+        if (currentWord) {
+            words.push(currentWord);
+        }
+        
+        return words;
     }
     
-    const oldTokens = tokenize(oldText);
-    const newTokens = tokenize(newText);
+    const oldWords = getWords(oldText);
+    const newWords = getWords(newText);
     
+    // Use Myers diff algorithm for better results
     let result = '';
     let i = 0, j = 0;
     
-    // Use a simple LCS-based approach
-    while (i < oldTokens.length || j < newTokens.length) {
-        if (i >= oldTokens.length) {
-            // Rest of new text
-            result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
+    while (i < oldWords.length || j < newWords.length) {
+        if (i >= oldWords.length) {
+            // New content at the end
+            result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
             j++;
-        } else if (j >= newTokens.length) {
-            // Rest of old text was removed
-            result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
+        } else if (j >= newWords.length) {
+            // Old content was removed
+            result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
             i++;
-        } else if (oldTokens[i] === newTokens[j]) {
-            // Tokens match
-            result += escapeHtml(oldTokens[i]);
+        } else if (oldWords[i] === newWords[j]) {
+            // Content matches
+            result += escapeHtml(oldWords[i]);
             i++;
             j++;
         } else {
-            // Tokens differ - look ahead for matches
-            let foundInNew = -1;
-            let foundInOld = -1;
+            // Content differs - find next match
+            let nextMatchOld = -1;
+            let nextMatchNew = -1;
             
-            // Look for current old token in upcoming new tokens
-            for (let k = j + 1; k < Math.min(j + 10, newTokens.length); k++) {
-                if (oldTokens[i] === newTokens[k]) {
-                    foundInNew = k;
+            // Look for old word in remaining new words
+            for (let k = j + 1; k < newWords.length && k < j + 20; k++) {
+                if (oldWords[i] === newWords[k]) {
+                    nextMatchNew = k;
                     break;
                 }
             }
             
-            // Look for current new token in upcoming old tokens
-            for (let k = i + 1; k < Math.min(i + 10, oldTokens.length); k++) {
-                if (newTokens[j] === oldTokens[k]) {
-                    foundInOld = k;
+            // Look for new word in remaining old words  
+            for (let k = i + 1; k < oldWords.length && k < i + 20; k++) {
+                if (newWords[j] === oldWords[k]) {
+                    nextMatchOld = k;
                     break;
                 }
             }
             
-            if (foundInNew !== -1 && (foundInOld === -1 || foundInNew - j <= foundInOld - i)) {
-                // Current position to foundInNew are additions
-                while (j < foundInNew) {
-                    result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
+            // Decide whether it's an insertion, deletion, or replacement
+            if (nextMatchNew !== -1 && (nextMatchOld === -1 || nextMatchNew - j < nextMatchOld - i)) {
+                // Insertion - show all new words until the match
+                while (j < nextMatchNew) {
+                    result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
                     j++;
                 }
-            } else if (foundInOld !== -1) {
-                // Current position to foundInOld are deletions
-                while (i < foundInOld) {
-                    result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
+            } else if (nextMatchOld !== -1) {
+                // Deletion - show all old words until the match
+                while (i < nextMatchOld) {
+                    result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
                     i++;
                 }
             } else {
-                // Simple replacement
-                // Check if this looks like a word change (not whitespace)
-                if (oldTokens[i].trim() && newTokens[j].trim()) {
-                    result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
-                    result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
+                // Replacement - but only if both are actual words, not just whitespace
+                const oldIsWord = /\w/.test(oldWords[i]);
+                const newIsWord = /\w/.test(newWords[j]);
+                
+                if (oldIsWord && newIsWord) {
+                    // Both are words - check if it's actually a partial match
+                    // If new word contains old word, show it as an edit
+                    if (newWords[j].includes(oldWords[i])) {
+                        // The new word contains the old word (e.g., "Mythology" -> "Mythologys")
+                        result += `<span class="diff-modified">${escapeHtml(newWords[j])}</span>`;
+                        i++;
+                        j++;
+                    } else {
+                        // Complete replacement
+                        result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+                        result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+                        i++;
+                        j++;
+                    }
+                } else if (oldIsWord) {
+                    // Only old is a word
+                    result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
                     i++;
-                    j++;
-                } else if (!oldTokens[i].trim()) {
-                    // Old is whitespace, skip it
-                    result += escapeHtml(oldTokens[i]);
-                    i++;
-                } else if (!newTokens[j].trim()) {
-                    // New is whitespace, skip it
-                    result += escapeHtml(newTokens[j]);
+                } else if (newIsWord) {
+                    // Only new is a word
+                    result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
                     j++;
                 } else {
-                    // Default: show both
-                    result += `<span class="diff-removed">${escapeHtml(oldTokens[i])}</span>`;
-                    result += `<span class="diff-added">${escapeHtml(newTokens[j])}</span>`;
+                    // Both are whitespace/punctuation - just show the new one
+                    result += escapeHtml(newWords[j]);
                     i++;
                     j++;
                 }
@@ -2058,7 +2101,8 @@ function formatDate(dateString) {
     text-decoration: line-through;
     padding: 2px 4px;
     border-radius: 3px;
-    margin: 0 1px;
+    margin: 0 2px;
+    display: inline-block;
 }
 
 .diff-added {
@@ -2066,7 +2110,23 @@ function formatDate(dateString) {
     color: #fff;
     padding: 2px 4px;
     border-radius: 3px;
+    margin: 0 2px;
+    display: inline-block;
+}
+
+.diff-separator {
+    color: #999;
+    font-weight: bold;
+    margin: 0 4px;
+}
+
+.diff-modified {
+    background: #666;
+    color: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
     margin: 0 1px;
+    text-decoration: underline;
 }
 
 .no-changes {
