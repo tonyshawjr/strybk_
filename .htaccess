@@ -4,7 +4,10 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Redirect everything to public folder
+    # Special handling for install
+    RewriteRule ^install/?$ /public/install.php [L]
+    
+    # Redirect everything else to public folder
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ /public/$1 [L]
     
