@@ -278,6 +278,7 @@ a:hover {
     cursor: pointer;
     position: relative;
     transition: background 0.2s ease;
+    gap: 4px;
 }
 
 .visibility-mode-toggle .toggle-slider {
@@ -298,9 +299,8 @@ a:hover {
     align-items: center;
     justify-content: center;
     z-index: 1;
-    font-size: 14px;
+    font-size: 13px;
     transition: color 0.2s ease;
-    line-height: 1;
 }
 
 .visibility-mode-toggle .private-icon {
