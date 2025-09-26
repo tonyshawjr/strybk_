@@ -511,25 +511,51 @@ class PageController {
         
         $page = $this->pageModel->find($pageId);
         
-        if (!$page || !$this->bookModel->isOwner($page['book_id'], $userId)) {
+        if (!$page) {
             header('Content-Type: application/json');
             http_response_code(404);
-            echo json_encode(['error' => 'Page not found']);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Page not found',
+                'error' => 'Page not found'
+            ]);
             return;
         }
         
-        if ($this->versionModel->restoreVersion($pageId, $versionNumber, $userId)) {
+        if (!$this->bookModel->isOwner($page['book_id'], $userId)) {
             header('Content-Type: application/json');
+            http_response_code(403);
             echo json_encode([
-                'success' => true,
-                'message' => 'Version restored successfully'
+                'success' => false,
+                'message' => 'Access denied',
+                'error' => 'Access denied'
             ]);
-        } else {
+            return;
+        }
+        
+        try {
+            $result = $this->versionModel->restoreVersion($pageId, $versionNumber, $userId);
+            
+            if ($result) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Version restored successfully'
+                ]);
+            } else {
+                header('Content-Type: application/json');
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to restore version - version not found or database error'
+                ]);
+            }
+        } catch (Exception $e) {
             header('Content-Type: application/json');
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => 'Failed to restore version'
+                'message' => 'Error restoring version: ' . $e->getMessage()
             ]);
         }
     }

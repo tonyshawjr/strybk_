@@ -55,13 +55,24 @@ class PageVersion {
      * Get all versions for a page
      */
     public function getPageVersions(int $pageId): array {
-        $sql = "SELECT pv.*, u.name as author_name 
+        $sql = "SELECT pv.*, 
+                       u.name as author_name,
+                       DATE_FORMAT(pv.created_at, '%Y-%m-%d %H:%i:%s') as created_at_formatted
                 FROM page_versions pv
                 LEFT JOIN users u ON pv.user_id = u.id
                 WHERE pv.page_id = ?
                 ORDER BY pv.version_number DESC";
         
-        return $this->db->select($sql, [$pageId]);
+        $results = $this->db->select($sql, [$pageId]);
+        
+        // Ensure created_at is properly formatted
+        foreach ($results as &$result) {
+            if (!empty($result['created_at_formatted'])) {
+                $result['created_at'] = $result['created_at_formatted'];
+            }
+        }
+        
+        return $results;
     }
     
     /**

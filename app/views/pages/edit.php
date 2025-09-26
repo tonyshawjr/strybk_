@@ -1190,32 +1190,104 @@ function displayComparison(data) {
 }
 
 function generateDiffView(oldText, newText) {
-    // Convert HTML to blocks for comparison while preserving formatting
-    const oldBlocks = htmlToBlocks(oldText || '');
-    const newBlocks = htmlToBlocks(newText || '');
+    // Strip HTML and compare plain text
+    const oldClean = stripHtml(oldText || '');
+    const newClean = stripHtml(newText || '');
     
-    // Simple diff algorithm - find what's added, removed, or unchanged
-    const diff = computeDiff(oldBlocks, newBlocks);
+    // If texts are identical
+    if (oldClean === newClean) {
+        return '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
+    }
     
-    let diffHtml = '<div class="diff-container">';
+    // Split into words for word-level diff
+    const oldWords = oldClean.split(/(\s+)/);
+    const newWords = newClean.split(/(\s+)/);
+    
+    // Compute word-level diff
+    const diff = computeWordDiff(oldWords, newWords);
+    
+    let diffHtml = '<div class="diff-container"><div class="diff-text">';
     
     diff.forEach(part => {
         if (part.type === 'unchanged') {
-            diffHtml += `<div class="diff-block diff-unchanged">${part.html}</div>`;
+            diffHtml += escapeHtml(part.text);
         } else if (part.type === 'removed') {
-            diffHtml += `<div class="diff-block diff-removed">${part.html}</div>`;
+            diffHtml += `<span class="diff-removed">${escapeHtml(part.text)}</span>`;
         } else if (part.type === 'added') {
-            diffHtml += `<div class="diff-block diff-added">${part.html}</div>`;
+            diffHtml += `<span class="diff-added">${escapeHtml(part.text)}</span>`;
         }
     });
     
-    diffHtml += '</div>';
-    
-    if (diff.length === 0 || (diff.length === 1 && diff[0].type === 'unchanged')) {
-        diffHtml = '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
-    }
+    diffHtml += '</div></div>';
     
     return diffHtml;
+}
+
+function computeWordDiff(oldWords, newWords) {
+    const diff = [];
+    let i = 0, j = 0;
+    
+    while (i < oldWords.length || j < newWords.length) {
+        if (i >= oldWords.length) {
+            // Remaining new words are additions
+            diff.push({ type: 'added', text: newWords[j] });
+            j++;
+        } else if (j >= newWords.length) {
+            // Remaining old words are deletions
+            diff.push({ type: 'removed', text: oldWords[i] });
+            i++;
+        } else if (oldWords[i] === newWords[j]) {
+            // Unchanged
+            diff.push({ type: 'unchanged', text: oldWords[i] });
+            i++;
+            j++;
+        } else {
+            // Different - look for next match
+            let foundMatch = false;
+            
+            // Look ahead in new array for current old word
+            for (let k = j + 1; k < Math.min(j + 10, newWords.length); k++) {
+                if (oldWords[i] === newWords[k]) {
+                    // Words j to k-1 are additions
+                    for (let m = j; m < k; m++) {
+                        diff.push({ type: 'added', text: newWords[m] });
+                    }
+                    diff.push({ type: 'unchanged', text: oldWords[i] });
+                    j = k + 1;
+                    i++;
+                    foundMatch = true;
+                    break;
+                }
+            }
+            
+            if (!foundMatch) {
+                // Look ahead in old array for current new word
+                for (let k = i + 1; k < Math.min(i + 10, oldWords.length); k++) {
+                    if (newWords[j] === oldWords[k]) {
+                        // Words i to k-1 are deletions
+                        for (let m = i; m < k; m++) {
+                            diff.push({ type: 'removed', text: oldWords[m] });
+                        }
+                        diff.push({ type: 'unchanged', text: newWords[j] });
+                        i = k + 1;
+                        j++;
+                        foundMatch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!foundMatch) {
+                // No match found, one word changed to another
+                diff.push({ type: 'removed', text: oldWords[i] });
+                diff.push({ type: 'added', text: newWords[j] });
+                i++;
+                j++;
+            }
+        }
+    }
+    
+    return diff;
 }
 
 function htmlToBlocks(html) {
@@ -1875,66 +1947,30 @@ function escapeHtml(text) {
     overflow-y: auto;
 }
 
-.diff-block {
-    margin-bottom: 12px;
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-.diff-block p {
-    margin: 0 0 8px 0;
-}
-
-.diff-block p:last-child {
-    margin-bottom: 0;
-}
-
-.diff-unchanged {
+.diff-text {
+    font-family: Georgia, serif;
+    font-size: 16px;
+    line-height: 1.8;
     color: #333333;
-    background: transparent;
-}
-
-.diff-unchanged p,
-.diff-unchanged h1,
-.diff-unchanged h2,
-.diff-unchanged h3 {
-    color: #333333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .diff-removed {
     background: #ffecec;
-    border-left: 3px solid #c41e3a;
-    position: relative;
-}
-
-.diff-removed::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 100%;
-    height: 1px;
-    background: #c41e3a;
-    opacity: 0.3;
-}
-
-.diff-removed p,
-.diff-removed h1,
-.diff-removed h2,
-.diff-removed h3 {
     color: #c41e3a;
+    text-decoration: line-through;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin: 0 1px;
 }
 
 .diff-added {
     background: #e6ffec;
-    border-left: 3px solid #22863a;
-}
-
-.diff-added p,
-.diff-added h1,
-.diff-added h2,
-.diff-added h3 {
     color: #22863a;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin: 0 1px;
 }
 
 .no-changes {
