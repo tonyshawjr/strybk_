@@ -4,16 +4,30 @@ include __DIR__ . '/../partials/header.php';
 ?>
 
 <div class="container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-nav">
+        <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="breadcrumb-link">
+            <?= htmlspecialchars($book['title']) ?>
+        </a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current"><?= htmlspecialchars($page['title']) ?></span>
+    </div>
     <div class="editor-container">
         <!-- Editor Toolbar -->
         <div class="editor-toolbar">
             <div class="toolbar-group">
-                <button class="toolbar-btn" data-command="visibility" title="Toggle visibility">
-                    <i class="fa-regular fa-eye"></i>
-                </button>
-                <button class="toolbar-btn active" data-command="edit" title="Edit mode">
-                    <i class="fa-regular fa-pen-to-square"></i>
-                </button>
+                <div class="view-mode-toggle">
+                    <input type="checkbox" id="view-toggle" class="toggle-input" checked>
+                    <label for="view-toggle" class="toggle-label">
+                        <span class="toggle-icon view-icon">
+                            <i class="fa-regular fa-eye"></i>
+                        </span>
+                        <span class="toggle-icon edit-icon">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </span>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
             </div>
             
             <div class="toolbar-divider"></div>
@@ -112,11 +126,37 @@ include __DIR__ . '/../partials/header.php';
 </div>
 
 <style>
+/* Breadcrumb Navigation */
+.breadcrumb-nav {
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: #999999;
+}
+
+.breadcrumb-link {
+    color: #666666;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: #111111;
+}
+
+.breadcrumb-separator {
+    margin: 0 8px;
+    color: #CCCCCC;
+}
+
+.breadcrumb-current {
+    color: #111111;
+    font-weight: 500;
+}
+
 /* Editor Container */
 .editor-container {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 12px;
     overflow: hidden;
     margin-bottom: 40px;
 }
@@ -124,17 +164,81 @@ include __DIR__ . '/../partials/header.php';
 /* Editor Toolbar */
 .editor-toolbar {
     background: #F5F5F5;
-    border-bottom: 1px solid #E5E5E5;
     padding: 8px 16px;
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    border-radius: 12px 12px 0 0;
 }
 
 .toolbar-group {
     display: flex;
     gap: 4px;
+}
+
+/* View Mode Toggle */
+.view-mode-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-input {
+    display: none;
+}
+
+.toggle-label {
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 32px;
+    background: #E5E5E5;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toggle-input:checked + .toggle-label .toggle-slider {
+    transform: translateX(32px);
+}
+
+.toggle-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #666666;
+    transition: opacity 0.3s ease;
+}
+
+.view-icon {
+    left: 8px;
+    opacity: 1;
+}
+
+.edit-icon {
+    right: 8px;
+    opacity: 0.3;
+}
+
+.toggle-input:checked + .toggle-label .view-icon {
+    opacity: 0.3;
+}
+
+.toggle-input:checked + .toggle-label .edit-icon {
+    opacity: 1;
 }
 
 .toolbar-btn {
@@ -158,16 +262,6 @@ include __DIR__ . '/../partials/header.php';
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.toolbar-btn.active {
-    background: #111111;
-    color: white;
-}
-
-.toolbar-btn.active:hover {
-    background: #333333;
-    color: white;
-}
-
 .toolbar-divider {
     width: 1px;
     height: 24px;
@@ -181,28 +275,28 @@ include __DIR__ . '/../partials/header.php';
 
 /* Title Input */
 .editor-title {
-    padding: 24px 32px;
-    border-bottom: 1px solid #F0F0F0;
+    padding: 40px 60px 20px;
 }
 
 .title-input {
     width: 100%;
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 700;
     color: #111111;
     border: none;
     outline: none;
     padding: 0;
     font-family: 'Inter', sans-serif;
+    background: transparent;
 }
 
 .title-input::placeholder {
-    color: #CCCCCC;
+    color: #DDDDDD;
 }
 
 /* Content Editor */
 .editor-body {
-    padding: 32px;
+    padding: 0 60px 60px;
     min-height: 500px;
 }
 
@@ -212,8 +306,9 @@ include __DIR__ . '/../partials/header.php';
 }
 
 .content-editor {
-    font-size: 18px;
-    line-height: 1.7;
+    font-family: 'Georgia', serif;
+    font-size: 19px;
+    line-height: 1.8;
     color: #111111;
     min-height: 400px;
     outline: none;
@@ -223,36 +318,39 @@ include __DIR__ . '/../partials/header.php';
     outline: none;
 }
 
-/* Editor Typography */
-.content-editor h1,
-.content-editor h2,
-.content-editor h3 {
-    font-weight: 700;
-    margin: 24px 0 16px;
-    color: #111111;
-}
-
+/* Editor Typography - Clean reading experience */
 .content-editor h1 {
-    font-size: 32px;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 32px 0 16px;
+    color: #111111;
+    font-family: 'Inter', sans-serif;
 }
 
 .content-editor h2 {
-    font-size: 28px;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 28px 0 14px;
+    color: #111111;
+    font-family: 'Inter', sans-serif;
 }
 
 .content-editor h3 {
-    font-size: 24px;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 24px 0 12px;
+    color: #111111;
+    font-family: 'Inter', sans-serif;
 }
 
 .content-editor p {
-    margin: 0 0 16px;
-    line-height: 1.7;
+    margin: 0 0 20px;
+    line-height: 1.8;
 }
 
 .content-editor strong,
 .content-editor b {
-    font-weight: 700;
-    color: #111111;
+    font-weight: 600;
 }
 
 .content-editor em,
@@ -322,9 +420,9 @@ include __DIR__ . '/../partials/header.php';
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 32px;
-    border-top: 1px solid #F0F0F0;
-    background: #FAFAFA;
+    padding: 20px 60px;
+    background: white;
+    border-top: 1px solid #F5F5F5;
 }
 
 .word-count {
@@ -466,6 +564,25 @@ document.getElementById('page-form').addEventListener('submit', function(e) {
     textarea.value = editor.innerHTML;
 });
 
+// View mode toggle
+document.getElementById('view-toggle')?.addEventListener('change', function() {
+    const isEditMode = this.checked;
+    const editor = document.getElementById('editor');
+    const titleInput = document.querySelector('.title-input');
+    
+    if (isEditMode) {
+        // Edit mode
+        editor.setAttribute('contenteditable', 'true');
+        titleInput.removeAttribute('readonly');
+        editor.style.cursor = 'text';
+    } else {
+        // View mode - read only
+        editor.setAttribute('contenteditable', 'false');
+        titleInput.setAttribute('readonly', 'readonly');
+        editor.style.cursor = 'default';
+    }
+});
+
 // Toolbar button handlers
 document.querySelectorAll('.toolbar-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -520,13 +637,6 @@ document.querySelectorAll('.toolbar-btn').forEach(btn => {
                 break;
             case 'history':
                 alert('Version history coming soon');
-                break;
-            case 'visibility':
-                // Toggle visibility button state
-                this.classList.toggle('active');
-                break;
-            case 'edit':
-                // Already in edit mode
                 break;
             case 'chevrons':
                 // Custom formatting

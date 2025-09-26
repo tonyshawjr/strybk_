@@ -26,6 +26,14 @@ include __DIR__ . '/../partials/header.php';
                 <h1 class="book-title-display"><?= htmlspecialchars($book['title']) ?></h1>
                 <p class="book-author-display"><?= htmlspecialchars($book['author'] ?? '37signals') ?></p>
                 
+                <!-- View Book Link -->
+                <?php if ($book['is_public']): ?>
+                    <a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-link">
+                        <i class="fa-regular fa-eye"></i>
+                        View Book
+                    </a>
+                <?php endif; ?>
+                
                 <!-- Privacy Toggle -->
                 <div class="privacy-toggle-container">
                     <button class="privacy-toggle <?= $book['is_public'] ? 'public' : 'private' ?>" 
@@ -225,7 +233,30 @@ function getBookColor($title) {
 .book-author-display {
     font-size: 18px;
     color: #666666;
-    margin: 0 0 24px 0;
+    margin: 0 0 16px 0;
+}
+
+/* View Book Link */
+.view-book-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #E5E5E5;
+    border-radius: 6px;
+    color: #666666;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.view-book-link:hover {
+    background: #F5F5F5;
+    border-color: #111111;
+    color: #111111;
 }
 
 /* Privacy Toggle */
