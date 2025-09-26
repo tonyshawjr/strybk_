@@ -140,7 +140,9 @@ include __DIR__ . '/../partials/header.php';
 <style>
 /* Breadcrumb Navigation */
 .breadcrumb-nav {
-    margin-bottom: 24px;
+    max-width: calc(700px + 120px);
+    margin: 0 auto 24px;
+    padding: 0 60px;
     font-size: 14px;
     color: #999999;
 }
@@ -169,16 +171,18 @@ include __DIR__ . '/../partials/header.php';
 .editor-container {
     background: white;
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to allow sticky toolbar */
     margin-bottom: 40px;
+    position: relative;
 }
 
 /* Editor Toolbar */
 .editor-toolbar {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     padding: 8px 0;
     border-bottom: 1px solid #F0F0F0;
+    border-radius: 12px 12px 0 0;
     position: sticky;
     top: 0;
     z-index: 100;
