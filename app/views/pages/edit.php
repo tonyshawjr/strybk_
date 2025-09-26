@@ -1170,7 +1170,7 @@ function displayComparison(data) {
                     <i class="fa-solid fa-columns"></i> Side by Side
                 </button>
             </div>
-            <div class="compare-content" id="compare-diff-view">
+            <div id="compare-diff-view" style="display: block;">
                 ${diffHtml}
             </div>
             <div class="compare-content" id="compare-side-view" style="display: none;">
@@ -1190,26 +1190,22 @@ function displayComparison(data) {
 }
 
 function generateDiffView(oldText, newText) {
-    // Strip HTML tags for comparison
-    const oldClean = stripHtml(oldText);
-    const newClean = stripHtml(newText);
-    
-    // Split into sentences for better diff granularity
-    const oldSentences = splitIntoSentences(oldClean);
-    const newSentences = splitIntoSentences(newClean);
+    // Convert HTML to blocks for comparison while preserving formatting
+    const oldBlocks = htmlToBlocks(oldText || '');
+    const newBlocks = htmlToBlocks(newText || '');
     
     // Simple diff algorithm - find what's added, removed, or unchanged
-    const diff = computeDiff(oldSentences, newSentences);
+    const diff = computeDiff(oldBlocks, newBlocks);
     
     let diffHtml = '<div class="diff-container">';
     
     diff.forEach(part => {
         if (part.type === 'unchanged') {
-            diffHtml += `<span class="diff-unchanged">${escapeHtml(part.text)}</span>`;
+            diffHtml += `<div class="diff-block diff-unchanged">${part.html}</div>`;
         } else if (part.type === 'removed') {
-            diffHtml += `<span class="diff-removed">${escapeHtml(part.text)}</span>`;
+            diffHtml += `<div class="diff-block diff-removed">${part.html}</div>`;
         } else if (part.type === 'added') {
-            diffHtml += `<span class="diff-added">${escapeHtml(part.text)}</span>`;
+            diffHtml += `<div class="diff-block diff-added">${part.html}</div>`;
         }
     });
     
@@ -1220,6 +1216,39 @@ function generateDiffView(oldText, newText) {
     }
     
     return diffHtml;
+}
+
+function htmlToBlocks(html) {
+    if (!html) return [];
+    
+    // Create a temporary element to parse HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    const blocks = [];
+    
+    // Process each paragraph or block-level element
+    const elements = temp.querySelectorAll('p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, div');
+    
+    if (elements.length === 0 && temp.textContent.trim()) {
+        // No block elements, just text
+        blocks.push({
+            text: temp.textContent.trim(),
+            html: html
+        });
+    } else {
+        elements.forEach(el => {
+            const text = el.textContent.trim();
+            if (text) {
+                blocks.push({
+                    text: text,
+                    html: el.outerHTML
+                });
+            }
+        });
+    }
+    
+    return blocks;
 }
 
 function stripHtml(html) {
@@ -1240,15 +1269,15 @@ function computeDiff(oldArr, newArr) {
     while (i < oldArr.length || j < newArr.length) {
         if (i >= oldArr.length) {
             // Remaining new items are additions
-            diff.push({ type: 'added', text: newArr[j] });
+            diff.push({ type: 'added', text: newArr[j].text, html: newArr[j].html });
             j++;
         } else if (j >= newArr.length) {
             // Remaining old items are deletions
-            diff.push({ type: 'removed', text: oldArr[i] });
+            diff.push({ type: 'removed', text: oldArr[i].text, html: oldArr[i].html });
             i++;
-        } else if (oldArr[i].trim() === newArr[j].trim()) {
+        } else if (oldArr[i].text === newArr[j].text) {
             // Unchanged
-            diff.push({ type: 'unchanged', text: oldArr[i] });
+            diff.push({ type: 'unchanged', text: oldArr[i].text, html: oldArr[i].html });
             i++;
             j++;
         } else {
@@ -1257,12 +1286,12 @@ function computeDiff(oldArr, newArr) {
             
             // Check if current old item exists somewhere ahead in new array
             for (let k = j + 1; k < Math.min(j + 5, newArr.length); k++) {
-                if (oldArr[i].trim() === newArr[k].trim()) {
+                if (oldArr[i].text === newArr[k].text) {
                     // Items before k are additions
                     for (let m = j; m < k; m++) {
-                        diff.push({ type: 'added', text: newArr[m] });
+                        diff.push({ type: 'added', text: newArr[m].text, html: newArr[m].html });
                     }
-                    diff.push({ type: 'unchanged', text: oldArr[i] });
+                    diff.push({ type: 'unchanged', text: oldArr[i].text, html: oldArr[i].html });
                     j = k + 1;
                     i++;
                     foundMatch = true;
@@ -1273,12 +1302,12 @@ function computeDiff(oldArr, newArr) {
             if (!foundMatch) {
                 // Check if current new item exists somewhere ahead in old array
                 for (let k = i + 1; k < Math.min(i + 5, oldArr.length); k++) {
-                    if (newArr[j].trim() === oldArr[k].trim()) {
+                    if (newArr[j].text === oldArr[k].text) {
                         // Items before k are deletions
                         for (let m = i; m < k; m++) {
-                            diff.push({ type: 'removed', text: oldArr[m] });
+                            diff.push({ type: 'removed', text: oldArr[m].text, html: oldArr[m].html });
                         }
-                        diff.push({ type: 'unchanged', text: newArr[j] });
+                        diff.push({ type: 'unchanged', text: newArr[j].text, html: newArr[j].html });
                         i = k + 1;
                         j++;
                         foundMatch = true;
@@ -1289,8 +1318,8 @@ function computeDiff(oldArr, newArr) {
             
             if (!foundMatch) {
                 // No match found, treat as remove and add
-                diff.push({ type: 'removed', text: oldArr[i] });
-                diff.push({ type: 'added', text: newArr[j] });
+                diff.push({ type: 'removed', text: oldArr[i].text, html: oldArr[i].html });
+                diff.push({ type: 'added', text: newArr[j].text, html: newArr[j].html });
                 i++;
                 j++;
             }
@@ -1846,25 +1875,66 @@ function escapeHtml(text) {
     overflow-y: auto;
 }
 
+.diff-block {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.diff-block p {
+    margin: 0 0 8px 0;
+}
+
+.diff-block p:last-child {
+    margin-bottom: 0;
+}
+
 .diff-unchanged {
+    color: #333333;
+    background: transparent;
+}
+
+.diff-unchanged p,
+.diff-unchanged h1,
+.diff-unchanged h2,
+.diff-unchanged h3 {
     color: #333333;
 }
 
 .diff-removed {
     background: #ffecec;
+    border-left: 3px solid #c41e3a;
+    position: relative;
+}
+
+.diff-removed::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #c41e3a;
+    opacity: 0.3;
+}
+
+.diff-removed p,
+.diff-removed h1,
+.diff-removed h2,
+.diff-removed h3 {
     color: #c41e3a;
-    text-decoration: line-through;
-    padding: 2px 4px;
-    border-radius: 3px;
-    margin: 0 2px;
 }
 
 .diff-added {
     background: #e6ffec;
+    border-left: 3px solid #22863a;
+}
+
+.diff-added p,
+.diff-added h1,
+.diff-added h2,
+.diff-added h3 {
     color: #22863a;
-    padding: 2px 4px;
-    border-radius: 3px;
-    margin: 0 2px;
 }
 
 .no-changes {
