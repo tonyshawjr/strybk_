@@ -43,14 +43,15 @@
         }
         
         .header-content {
+            position: relative;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
         }
         
         .logo {
             font-size: 32px;
-            font-weight: 600;
+            font-weight: 700;
             color: #111111;
             text-decoration: none;
             letter-spacing: -0.02em;
@@ -61,6 +62,8 @@
         }
         
         .logout-button {
+            position: absolute;
+            right: 0;
             background: none;
             border: 1px solid #E5E5E5;
             padding: 8px 16px;
