@@ -7,14 +7,11 @@
    CSS Variables & Design Tokens
    ================================ */
 :root {
-    /* Brand Colors */
-    --purple: #6C4AB6;
-    --purple-dark: #5a3d99;
-    --purple-light: #8b69d4;
-    --indigo: #2E1A47;
-    --indigo-dark: #1f0f33;
-    --lime: #A8FF60;
-    --lime-dark: #8fdb51;
+    /* Brand Colors - Monochrome */
+    --primary: #111111;
+    --primary-hover: #333333;
+    --accent: #666666;
+    --accent-hover: #444444;
     
     /* Neutral Colors - Clean and minimal */
     --white: #FFFFFF;
@@ -182,13 +179,14 @@ p {
 }
 
 a {
-    color: var(--purple);
+    color: var(--black);
     text-decoration: none;
     transition: color var(--transition-fast);
 }
 
 a:hover {
-    color: var(--purple-dark);
+    color: var(--gray-700);
+    text-decoration: underline;
 }
 
 strong, b {
@@ -241,7 +239,7 @@ pre code {
 
 /* Blockquote */
 blockquote {
-    border-left: 4px solid var(--purple);
+    border-left: 4px solid var(--gray-400);
     padding-left: var(--space-6);
     margin: var(--space-6) 0;
     font-style: italic;
@@ -332,8 +330,8 @@ blockquote {
 .form-textarea:focus,
 .form-select:focus {
     outline: none;
-    border-color: var(--purple);
-    box-shadow: 0 0 0 3px rgba(108, 74, 182, 0.1);
+    border-color: var(--black);
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.1);
 }
 
 .form-textarea {
@@ -394,12 +392,12 @@ blockquote {
 
 /* Button Variants */
 .btn-primary {
-    background-color: var(--purple);
+    background-color: var(--black);
     color: var(--white);
 }
 
 .btn-primary:hover {
-    background-color: var(--purple-dark);
+    background-color: var(--gray-800);
     color: var(--white);
 }
 
@@ -531,11 +529,11 @@ blockquote {
 }
 
 .nav-link:hover {
-    color: var(--purple);
+    color: var(--black);
 }
 
 .nav-link.active {
-    color: var(--purple);
+    color: var(--black);
     font-weight: 500;
 }
 
@@ -555,7 +553,7 @@ blockquote {
 }
 
 .breadcrumb-item:hover {
-    color: var(--purple);
+    color: var(--black);
 }
 
 .breadcrumb-separator {
@@ -755,7 +753,7 @@ blockquote {
 .text-gray-600 { color: var(--gray-600); }
 .text-gray-700 { color: var(--gray-700); }
 .text-gray-900 { color: var(--gray-900); }
-.text-purple { color: var(--purple); }
+.text-primary { color: var(--black); }
 .text-danger { color: var(--danger); }
 .text-success { color: var(--success); }
 
@@ -897,7 +895,7 @@ blockquote {
 
 /* Focus visible for keyboard navigation */
 *:focus-visible {
-    outline: 2px solid var(--purple);
+    outline: 2px solid var(--black);
     outline-offset: 2px;
 }
 
@@ -907,7 +905,7 @@ blockquote {
     left: -9999px;
     z-index: 999;
     padding: var(--space-3) var(--space-4);
-    background-color: var(--purple);
+    background-color: var(--black);
     color: var(--white);
     text-decoration: none;
     border-radius: var(--radius-md);

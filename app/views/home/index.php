@@ -12,7 +12,7 @@
     <style>
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, var(--indigo) 0%, var(--purple) 100%);
+            background: linear-gradient(135deg, #111111 0%, #333333 100%);
             color: var(--white);
             padding: var(--space-24) 0;
             text-align: center;
@@ -45,12 +45,12 @@
         
         .btn-light {
             background: var(--white);
-            color: var(--purple);
+            color: var(--black);
         }
         
         .btn-light:hover {
             background: var(--gray-100);
-            color: var(--purple-dark);
+            color: var(--gray-700);
         }
         
         /* Features Section */

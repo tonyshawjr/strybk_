@@ -222,7 +222,7 @@ function getBookColor($title) {
 }
 
 .add-book-card:hover .icon-circle {
-    background: #6C4AB6;
+    background: #333333;
     transform: scale(1.1);
 }
 

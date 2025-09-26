@@ -109,13 +109,13 @@ class Router {
             <title>Strybk_ - Coming Soon</title>
             <style>
                 :root {
-                    --purple: #6C4AB6;
+                    --primary: #111111;
                     --indigo: #2E1A47;
                     --lime: #A8FF60;
                 }
                 body {
                     font-family: 'Inter', -apple-system, sans-serif;
-                    background: linear-gradient(135deg, var(--indigo) 0%, var(--purple) 100%);
+                    background: linear-gradient(135deg, #111111 0%, #333333 100%);
                     min-height: 100vh;
                     display: flex;
                     align-items: center;

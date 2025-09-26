@@ -11,7 +11,7 @@
     <!-- Page-specific styles -->
     <style>
         body {
-            background: linear-gradient(135deg, var(--indigo) 0%, var(--purple) 100%);
+            background: linear-gradient(135deg, #111111 0%, #333333 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -35,7 +35,7 @@
         }
         
         .login-logo h1 {
-            color: var(--purple);
+            color: #111111;
             font-size: var(--text-4xl);
             margin-bottom: var(--space-2);
         }
@@ -79,7 +79,7 @@
         }
         
         .back-link a {
-            color: var(--purple);
+            color: #111111;
             text-decoration: none;
         }
         

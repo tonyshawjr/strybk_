@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         :root {
-            --purple: #6C4AB6;
+            --primary: #111111;
             --indigo: #2E1A47;
             --lime: #A8FF60;
             --gray-50: #f9fafb;
@@ -97,7 +97,7 @@
         
         .toc-item.current {
             background: white;
-            border-left-color: var(--purple);
+            border-left-color: var(--primary);
         }
         
         .toc-item.section {
@@ -156,7 +156,7 @@
         }
         
         .breadcrumb-item:hover {
-            color: var(--purple);
+            color: var(--primary);
         }
         
         .breadcrumb-separator {
@@ -189,7 +189,7 @@
         }
         
         .toggle-toc:hover {
-            color: var(--purple);
+            color: var(--primary);
         }
         
         .progress-bar {
@@ -202,7 +202,7 @@
         
         .progress-fill {
             height: 100%;
-            background: var(--purple);
+            background: var(--primary);
             transition: width 0.3s;
         }
         
@@ -273,7 +273,7 @@
         }
         
         .page-content blockquote {
-            border-left: 4px solid var(--purple);
+            border-left: 4px solid #666666;
             padding-left: 1.5rem;
             margin: 2rem 0;
             font-style: italic;
@@ -369,7 +369,7 @@
         }
         
         .nav-button:hover {
-            background: var(--purple);
+            background: var(--primary);
             color: white;
         }
         
@@ -521,7 +521,7 @@
                 </div>
                 
                 <?php if ($auth->check() && $book['created_by'] == $auth->user()['id']): ?>
-                    <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" style="color: var(--purple); text-decoration: none;">
+                    <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" style="color: #111111; text-decoration: none;">
                         Edit Book
                     </a>
                 <?php endif; ?>
