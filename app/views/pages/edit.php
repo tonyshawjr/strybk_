@@ -172,21 +172,23 @@ include __DIR__ . '/../partials/header.php';
 .editor-container {
     background: white;
     border-radius: 12px;
-    overflow: visible; /* Changed from hidden to allow sticky toolbar */
     margin-bottom: 40px;
-    position: relative;
 }
 
 /* Editor Toolbar */
 .editor-toolbar {
+    background: white;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 8px 0;
     border-bottom: 1px solid #F0F0F0;
     border-radius: 12px 12px 0 0;
+    position: -webkit-sticky;
     position: sticky;
-    top: 0;
+    top: 0px;
     z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .editor-toolbar-inner {
