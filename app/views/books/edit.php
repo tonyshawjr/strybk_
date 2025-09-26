@@ -694,7 +694,8 @@ function getBookColor($title) {
 }
 
 .page-list-item:hover .page-title {
-    color: #000000;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .page-list-item.active {
@@ -825,6 +826,15 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     });
 });
 
+// Load saved view preference
+const savedView = localStorage.getItem('bookEditView') || 'gallery';
+if (savedView === 'list') {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.view-btn[data-view="list"]').classList.add('active');
+    document.querySelectorAll('.pages-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('list-view').classList.add('active');
+}
+
 // View Toggle
 document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -837,6 +847,9 @@ document.querySelectorAll('.view-btn').forEach(btn => {
         // Update active view
         document.querySelectorAll('.pages-view').forEach(v => v.classList.remove('active'));
         document.getElementById(view + '-view').classList.add('active');
+        
+        // Save preference
+        localStorage.setItem('bookEditView', view);
     });
 });
 
