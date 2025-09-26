@@ -128,8 +128,9 @@ class ReadController {
         // Calculate total word count and reading time
         $totalWords = 0;
         foreach ($pages as $page) {
-            if (in_array($page['kind'], ['chapter', 'section'])) {
-                $totalWords += $page['word_count'];
+            $displayKind = $page['display_kind'] ?? $this->pageModel->mapKindFromDatabase($page['kind']);
+            if (in_array($displayKind, ['chapter', 'section'])) {
+                $totalWords += ($page['word_count'] ?? 0);
             }
         }
         $readingTime = ceil($totalWords / 200); // Average reading speed: 200 words/minute

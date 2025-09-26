@@ -651,15 +651,6 @@
                 <?php endif; ?>
                 
                 <!-- Page Navigation -->
-                <?php 
-                // Debug output - remove after testing
-                if (isset($nextPage) && $nextPage) {
-                    echo "<!-- Debug: Next page ID: {$nextPage['id']}, Title: {$nextPage['title']}, Slug: {$nextPage['slug']} -->\n";
-                }
-                if (isset($currentPage)) {
-                    echo "<!-- Debug: Current page ID: {$currentPage['id']}, Title: {$currentPage['title']} -->\n";
-                }
-                ?>
                 <?php if (isset($nextPage) && $nextPage): ?>
                 <nav class="page-navigation">
                     <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button next-with-title">
