@@ -258,19 +258,28 @@ class BookController {
         
         // Check ownership
         if (!$this->bookModel->isOwner($id, $userId)) {
-            flash('Book not found.', 'error');
-            redirect('/books');
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
             return;
         }
         
         try {
             $this->bookModel->toggleVisibility($id);
-            flash('Book visibility updated!', 'success');
+            
+            // Get the new visibility status
+            $book = $this->bookModel->find($id);
+            
+            // Return JSON response
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'is_public' => $book['is_public']
+            ]);
         } catch (Exception $e) {
-            flash('Error updating visibility.', 'error');
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Failed to update visibility']);
         }
-        
-        redirect('/books');
     }
     
     /**

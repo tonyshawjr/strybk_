@@ -866,6 +866,20 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
         headers: {
             'X-CSRF-Token': '<?= $auth->csrfToken() ?>'
         }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Visibility updated successfully');
+        } else {
+            // Revert UI on error
+            console.error('Failed to update visibility');
+            location.reload(); // Reload to show correct state
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        location.reload(); // Reload to show correct state
     });
 });
 
