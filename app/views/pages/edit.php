@@ -1221,134 +1221,84 @@ function generateDiffView(oldText, newText) {
 }
 
 function findDifferences(oldText, newText) {
-    // Split text into words while preserving whitespace and line breaks
-    function getWords(text) {
-        // This regex matches:
-        // - Words (\w+)
-        // - Newlines (\n)
-        // - Spaces and tabs ([ \t]+) 
-        // - Any other single character
-        const tokens = text.match(/\w+|\n|[ \t]+|./g) || [];
-        return tokens;
+    // Process line by line to prevent cross-line word merging
+    const oldLines = oldText.split('\n');
+    const newLines = newText.split('\n');
+    
+    let result = [];
+    const maxLines = Math.max(oldLines.length, newLines.length);
+    
+    for (let lineIdx = 0; lineIdx < maxLines; lineIdx++) {
+        const oldLine = oldLines[lineIdx] !== undefined ? oldLines[lineIdx] : '';
+        const newLine = newLines[lineIdx] !== undefined ? newLines[lineIdx] : '';
+        
+        if (oldLine === newLine) {
+            // Lines match exactly
+            result.push(escapeHtml(oldLine));
+        } else {
+            // Process differences within this line only
+            result.push(processLineDiff(oldLine, newLine));
+        }
     }
     
-    const oldWords = getWords(oldText);
-    const newWords = getWords(newText);
+    return result.join('<br>');
+}
+
+function processLineDiff(oldLine, newLine) {
+    if (!oldLine && newLine) {
+        return `<span class="diff-added">${escapeHtml(newLine)}</span>`;
+    }
+    if (oldLine && !newLine) {
+        return `<span class="diff-removed">${escapeHtml(oldLine)}</span>`;
+    }
     
-    // Use Myers diff algorithm for better results
+    // Tokenize just this line
+    const oldWords = oldLine.match(/\S+|\s+/g) || [];
+    const newWords = newLine.match(/\S+|\s+/g) || [];
+    
     let result = '';
     let i = 0, j = 0;
     
+    // Simple word-by-word comparison within this line only
     while (i < oldWords.length || j < newWords.length) {
         if (i >= oldWords.length) {
-            // New content at the end
+            // Rest is additions
             result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
             j++;
         } else if (j >= newWords.length) {
-            // Old content was removed
+            // Rest is deletions
             result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
             i++;
         } else if (oldWords[i] === newWords[j]) {
-            // Content matches
-            if (oldWords[i] === '\n') {
-                result += '<br>';
-            } else {
-                result += escapeHtml(oldWords[i]);
-            }
+            // Words match
+            result += escapeHtml(oldWords[i]);
             i++;
             j++;
         } else {
-            // Content differs - find next match
-            let nextMatchOld = -1;
-            let nextMatchNew = -1;
+            // Words differ - just show both, no lookahead
+            const oldIsSpace = /^\s+$/.test(oldWords[i]);
+            const newIsSpace = /^\s+$/.test(newWords[j]);
             
-            // Look for old word in remaining new words
-            for (let k = j + 1; k < newWords.length && k < j + 20; k++) {
-                if (oldWords[i] === newWords[k]) {
-                    nextMatchNew = k;
-                    break;
-                }
-            }
-            
-            // Look for new word in remaining old words  
-            for (let k = i + 1; k < oldWords.length && k < i + 20; k++) {
-                if (newWords[j] === oldWords[k]) {
-                    nextMatchOld = k;
-                    break;
-                }
-            }
-            
-            // Check for line breaks - don't combine across lines
-            const oldIsNewline = oldWords[i] === '\n';
-            const newIsNewline = newWords[j] === '\n';
-            
-            if (oldIsNewline && newIsNewline) {
-                // Both are newlines, just output one
-                result += '<br>';
+            if (oldIsSpace && newIsSpace) {
+                // Both are spaces
+                result += oldWords[i];
                 i++;
                 j++;
-            } else if (oldIsNewline) {
-                // Old has newline, new doesn't - show the newline and continue
-                result += '<br>';
+            } else if (oldIsSpace) {
+                // Old is space, new is word
+                result += oldWords[i];
                 i++;
-            } else if (newIsNewline) {
-                // New has newline, old doesn't - show the newline and continue
-                result += '<br>';
+            } else if (newIsSpace) {
+                // New is space, old is word
+                result += newWords[j];
                 j++;
-            } else if (nextMatchNew !== -1 && (nextMatchOld === -1 || nextMatchNew - j < nextMatchOld - i)) {
-                // Insertion - show all new words until the match
-                while (j < nextMatchNew) {
-                    if (newWords[j] === '\n') {
-                        result += '<br>';
-                    } else {
-                        result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
-                    }
-                    j++;
-                }
-            } else if (nextMatchOld !== -1) {
-                // Deletion - show all old words until the match
-                while (i < nextMatchOld) {
-                    if (oldWords[i] === '\n') {
-                        result += '<br>';
-                    } else {
-                        result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
-                    }
-                    i++;
-                }
             } else {
-                // Replacement - but only if both are actual words, not just whitespace
-                const oldIsWord = /\w/.test(oldWords[i]);
-                const newIsWord = /\w/.test(newWords[j]);
-                
-                if (oldIsWord && newIsWord) {
-                    // Both are words - check if it's actually a partial match
-                    // If new word contains old word, show it as an edit
-                    if (newWords[j].includes(oldWords[i])) {
-                        // The new word contains the old word (e.g., "Mythology" -> "Mythologys")
-                        result += `<span class="diff-modified">${escapeHtml(newWords[j])}</span>`;
-                        i++;
-                        j++;
-                    } else {
-                        // Complete replacement
-                        result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
-                        result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
-                        i++;
-                        j++;
-                    }
-                } else if (oldIsWord) {
-                    // Only old is a word
-                    result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
-                    i++;
-                } else if (newIsWord) {
-                    // Only new is a word
-                    result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
-                    j++;
-                } else {
-                    // Both are whitespace/punctuation - just show the new one
-                    result += escapeHtml(newWords[j]);
-                    i++;
-                    j++;
-                }
+                // Both are words - show removed then added
+                result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+                result += ' ';
+                result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+                i++;
+                j++;
             }
         }
     }
