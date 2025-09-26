@@ -1343,6 +1343,15 @@ function confirmRestore(pageId, versionNumber) {
 function restoreVersion(pageId, versionNumber) {
     const csrfToken = document.querySelector('input[name="_token"]').value;
     
+    // Show loading state on restore button
+    const restoreButtons = document.querySelectorAll('.btn-version-restore');
+    restoreButtons.forEach(btn => {
+        if (btn.textContent.includes('Restore')) {
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restoring...';
+            btn.disabled = true;
+        }
+    });
+    
     fetch(`/pages/${pageId}/restore/${versionNumber}`, {
         method: 'POST',
         headers: {
@@ -1355,7 +1364,6 @@ function restoreVersion(pageId, versionNumber) {
     .then(data => {
         if (data.success) {
             // Clear the draft from localStorage to prevent it from overriding the restored version
-            // Get book_id from the form or page data
             const bookIdInput = document.querySelector('input[name="book_id"]');
             if (bookIdInput) {
                 const bookId = bookIdInput.value;
@@ -1363,16 +1371,51 @@ function restoreVersion(pageId, versionNumber) {
                 localStorage.removeItem(draftKey);
             }
             
-            alert('Version restored successfully!');
-            closeVersionHistory();
-            location.reload(); // Reload to show restored content
+            // Clear any autosave drafts
+            if (window.autosaveInterval) {
+                clearInterval(window.autosaveInterval);
+            }
+            
+            // Show success message briefly then reload
+            const modal = document.getElementById('version-history-modal');
+            if (modal) {
+                const modalBody = modal.querySelector('.version-modal-body');
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <i class="fa-solid fa-check-circle" style="font-size: 48px; color: #22c55e; margin-bottom: 20px;"></i>
+                        <h3 style="color: #111; margin-bottom: 10px;">Version Restored Successfully!</h3>
+                        <p style="color: #666;">Refreshing page to show restored content...</p>
+                        <div style="margin-top: 20px;">
+                            <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: #999;"></i>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Reload after a brief delay to show the success message
+            setTimeout(() => {
+                // Force reload with cache bypass
+                location.href = location.href + '?restored=' + Date.now();
+            }, 1500);
+            
         } else {
+            // Re-enable buttons on error
+            restoreButtons.forEach(btn => {
+                btn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Restore';
+                btn.disabled = false;
+            });
             alert('Failed to restore version: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Error restoring version:', error);
-        alert('Error restoring version');
+        // Re-enable buttons on error
+        const restoreButtons = document.querySelectorAll('.btn-version-restore');
+        restoreButtons.forEach(btn => {
+            btn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Restore';
+            btn.disabled = false;
+        });
+        alert('Error restoring version. Please try again.');
     });
 }
 

@@ -115,7 +115,8 @@ class PageVersion {
             'title' => $version['title'],
             'content' => $version['content'],
             'word_count' => $version['word_count'],
-            'kind' => $version['kind']
+            'kind' => $version['kind'],
+            'updated_at' => date('Y-m-d H:i:s')
         ], 'id = :id', ['id' => $pageId]);
         
         return true;
