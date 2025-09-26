@@ -2,6 +2,26 @@
 
 All notable changes to this project are tracked here.
 
+## [0.5.2] - 2025-09-26
+### Added
+- Markdown/WYSIWYG editor mode toggle
+  - Edit mode displays markdown source with monospace font
+  - View mode shows rendered HTML with WYSIWYG display
+  - Automatic conversion between formats on toggle
+  - Form submission handles markdown-to-HTML conversion
+
+### Changed
+- Limited version history to maximum 5 versions per page (was 50)
+- Version comparison now defaults to side-by-side view
+- Diff view temporarily hidden until algorithm improvements complete
+
+### Fixed
+- Version restore button now functioning correctly
+- Fixed function scope issues with window object binding
+
+### Known Issues
+- Diff view algorithm needs improvements for line-aware comparisons (documented in TASKS.md)
+
 ## [0.5.1] - 2025-09-26
 ### Fixed
 - Version history restore functionality now working correctly

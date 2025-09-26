@@ -45,8 +45,8 @@ class PageVersion {
             'version_count' => $versionNumber
         ], 'id = :id', ['id' => $pageId]);
         
-        // Prune old versions (keep last 50)
-        $this->pruneVersions($pageId, 50);
+        // Prune old versions (keep last 5)
+        $this->pruneVersions($pageId, 5);
         
         return $versionId;
     }
@@ -178,7 +178,7 @@ class PageVersion {
     /**
      * Delete old versions (keep last N versions)
      */
-    public function pruneVersions(int $pageId, int $keepCount = 50): int {
+    public function pruneVersions(int $pageId, int $keepCount = 5): int {
         // Get the version numbers to keep
         $sql = "SELECT version_number 
                 FROM page_versions 

@@ -1,15 +1,24 @@
 # TASKS
 
 ## Hotfix
-- [ ] N/A - Phase 1 Complete
+- [ ] Fix diff view algorithm for version comparison
+  - Current issue: Word-level diff algorithm needs proper line boundary respect
+  - Temporary solution: Hidden diff view, using side-by-side only
+  - TODO: Implement proper LCS-based diff with line awareness
 
 ## Today
-- [ ] Implement version history for pages
-  - [ ] Create database schema for versions
-  - [ ] Build version tracking on save
-  - [ ] Create version history UI
-  - [ ] Add version comparison/diff view
-  - [ ] Implement restore functionality
+- [x] Implement version history for pages (PARTIAL)
+  - [x] Create database schema for versions
+  - [x] Build version tracking on save
+  - [x] Create version history UI
+  - [x] Add side-by-side comparison view
+  - [ ] Fix diff view algorithm (moved to Hotfix)
+  - [x] Implement restore functionality
+  - [x] Limit versions to 5 max per page
+- [x] Add markdown/WYSIWYG editor modes
+  - [x] Edit mode shows markdown source
+  - [x] View mode shows rendered WYSIWYG
+  - [x] Convert between formats on toggle
 
 ## Next
 - [ ] Add user profile management

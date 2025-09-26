@@ -579,6 +579,7 @@ function updateWordCount() {
 // Initialize editor with proper formatting
 document.addEventListener('DOMContentLoaded', function() {
     const editor = document.getElementById('editor');
+    const viewToggle = document.getElementById('view-toggle');
     
     // If content has HTML tags but they're escaped, unescape them
     const content = editor.innerHTML;
@@ -592,6 +593,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ensure proper paragraph handling
     if (!editor.innerHTML.trim() || editor.innerHTML === '<br>') {
         editor.innerHTML = '<p><br></p>';
+    }
+    
+    // Start in edit mode (markdown) by default
+    if (viewToggle && viewToggle.checked) {
+        // Convert to markdown for initial edit mode
+        const markdownContent = htmlToMarkdown(editor.innerHTML);
+        editor.innerText = markdownContent;
+        editor.style.fontFamily = 'monospace';
+        editor.style.whiteSpace = 'pre-wrap';
     }
     
     // Initialize word count
@@ -615,7 +625,16 @@ document.getElementById('page-form').addEventListener('submit', function(e) {
     
     const editor = document.getElementById('editor');
     const textarea = document.getElementById('content-textarea');
-    textarea.value = editor.innerHTML;
+    const viewToggle = document.getElementById('view-toggle');
+    const isEditMode = viewToggle && viewToggle.checked;
+    
+    // If in edit mode (markdown), convert to HTML before saving
+    if (isEditMode) {
+        const htmlContent = markdownToHtml(editor.innerText);
+        textarea.value = htmlContent;
+    } else {
+        textarea.value = editor.innerHTML;
+    }
     
     // Get form data
     const formData = new FormData(this);
@@ -714,7 +733,112 @@ document.getElementById('page-form').addEventListener('submit', function(e) {
     });
 });
 
-// View mode toggle
+// Simple markdown to HTML converter
+function markdownToHtml(markdown) {
+    let html = markdown;
+    
+    // Headers
+    html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+    
+    // Bold and italic
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    
+    // Code blocks
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Line breaks and paragraphs
+    const lines = html.split('\n');
+    let inParagraph = false;
+    let result = '';
+    
+    for (let line of lines) {
+        line = line.trim();
+        if (line === '') {
+            if (inParagraph) {
+                result += '</p>';
+                inParagraph = false;
+            }
+        } else if (line.startsWith('<h') || line.startsWith('<pre>')) {
+            if (inParagraph) {
+                result += '</p>';
+                inParagraph = false;
+            }
+            result += line;
+        } else {
+            if (!inParagraph) {
+                result += '<p>';
+                inParagraph = true;
+            } else {
+                result += '<br>';
+            }
+            result += line;
+        }
+    }
+    
+    if (inParagraph) {
+        result += '</p>';
+    }
+    
+    return result || '<p><br></p>';
+}
+
+// Simple HTML to markdown converter
+function htmlToMarkdown(html) {
+    let markdown = html;
+    
+    // Remove all newlines first
+    markdown = markdown.replace(/\n/g, '');
+    
+    // Convert headers
+    markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+    markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+    markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+    
+    // Convert formatting
+    markdown = markdown.replace(/<strong><em>(.*?)<\/em><\/strong>/gi, '***$1***');
+    markdown = markdown.replace(/<em><strong>(.*?)<\/strong><\/em>/gi, '***$1***');
+    markdown = markdown.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+    markdown = markdown.replace(/<b>(.*?)<\/b>/gi, '**$1**');
+    markdown = markdown.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+    markdown = markdown.replace(/<i>(.*?)<\/i>/gi, '*$1*');
+    
+    // Convert links
+    markdown = markdown.replace(/<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+    
+    // Convert code
+    markdown = markdown.replace(/<pre><code>(.*?)<\/code><\/pre>/gi, '```\n$1\n```\n\n');
+    markdown = markdown.replace(/<code>(.*?)<\/code>/gi, '`$1`');
+    
+    // Convert line breaks and paragraphs
+    markdown = markdown.replace(/<br\s*\/?>/gi, '\n');
+    markdown = markdown.replace(/<\/p>\s*<p[^>]*>/gi, '\n\n');
+    markdown = markdown.replace(/<p[^>]*>/gi, '');
+    markdown = markdown.replace(/<\/p>/gi, '\n\n');
+    
+    // Clean up any remaining HTML tags
+    markdown = markdown.replace(/<[^>]+>/g, '');
+    
+    // Decode HTML entities
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = markdown;
+    markdown = textarea.value;
+    
+    // Clean up extra whitespace
+    markdown = markdown.replace(/\n{3,}/g, '\n\n');
+    markdown = markdown.trim();
+    
+    return markdown;
+}
+
+// View mode toggle with markdown/WYSIWYG support
 document.getElementById('view-toggle')?.addEventListener('change', function() {
     const isEditMode = this.checked;
     const editor = document.getElementById('editor');
@@ -722,17 +846,29 @@ document.getElementById('view-toggle')?.addEventListener('change', function() {
     const toolbar = document.querySelector('.editor-toolbar');
     
     if (isEditMode) {
-        // Edit mode - show all toolbar buttons
+        // Edit mode - show markdown source
         editor.setAttribute('contenteditable', 'true');
         titleInput.removeAttribute('readonly');
         editor.style.cursor = 'text';
         toolbar.classList.remove('view-mode');
+        
+        // Convert HTML to markdown for editing
+        const markdownContent = htmlToMarkdown(editor.innerHTML);
+        editor.innerText = markdownContent;
+        editor.style.fontFamily = 'monospace';
+        editor.style.whiteSpace = 'pre-wrap';
     } else {
-        // View mode - hide formatting buttons
+        // View mode - show WYSIWYG rendered HTML
         editor.setAttribute('contenteditable', 'false');
         titleInput.setAttribute('readonly', 'readonly');
         editor.style.cursor = 'default';
         toolbar.classList.add('view-mode');
+        
+        // Convert markdown to HTML for viewing
+        const htmlContent = markdownToHtml(editor.innerText);
+        editor.innerHTML = htmlContent;
+        editor.style.fontFamily = "'Georgia', serif";
+        editor.style.whiteSpace = 'normal';
     }
 });
 
@@ -1171,20 +1307,19 @@ function displayComparison(data) {
                 </div>
             </div>
             <div class="compare-view-toggle">
-                <button class="toggle-btn active" onclick="window.toggleCompareView('diff', this)">
-                    <i class="fa-solid fa-code-compare"></i> Diff View
-                </button>
-                <button class="toggle-btn" onclick="window.toggleCompareView('side', this)">
+                <!-- Diff view hidden until algorithm is fixed -->
+                <button class="toggle-btn active" onclick="window.toggleCompareView('side', this)">
                     <i class="fa-solid fa-columns"></i> Side by Side
                 </button>
                 <button class="toggle-btn restore-btn" onclick="window.confirmRestore(${data.page.id}, ${data.version1.version_number})">
                     <i class="fa-solid fa-clock-rotate-left"></i> Restore Version ${data.version1.version_number}
                 </button>
+                <small style="color: #999; margin-left: 10px;">Note: Advanced diff view coming soon</small>
             </div>
-            <div id="compare-diff-view" style="display: block;">
+            <div id="compare-diff-view" style="display: none;">
                 ${diffHtml}
             </div>
-            <div class="compare-content" id="compare-side-view" style="display: none;">
+            <div class="compare-content" id="compare-side-view" style="display: block;">
                 <div class="version-side">
                     <h4>Version ${data.version1.version_number} <small>(${formatDate(data.version1.created_at)})</small></h4>
                     <div class="version-content">${data.version1.content || '<em>Empty</em>'}</div>
