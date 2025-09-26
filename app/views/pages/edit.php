@@ -1134,6 +1134,12 @@ function compareWithCurrent(pageId, versionNumber) {
 function displayComparison(data) {
     const viewer = document.getElementById('version-viewer');
     
+    // Generate diff view
+    const diffHtml = generateDiffView(
+        data.version1.content || '', 
+        data.version2.content || ''
+    );
+    
     let html = `
         <div class="version-compare">
             <div class="compare-header">
@@ -1156,7 +1162,18 @@ function displayComparison(data) {
                     <span class="stat-value">${Math.abs((data.version2.word_count || 0) - (data.version1.word_count || 0))} words</span>
                 </div>
             </div>
-            <div class="compare-content">
+            <div class="compare-view-toggle">
+                <button class="toggle-btn active" onclick="toggleCompareView('diff', this)">
+                    <i class="fa-solid fa-code-compare"></i> Diff View
+                </button>
+                <button class="toggle-btn" onclick="toggleCompareView('side', this)">
+                    <i class="fa-solid fa-columns"></i> Side by Side
+                </button>
+            </div>
+            <div class="compare-content" id="compare-diff-view">
+                ${diffHtml}
+            </div>
+            <div class="compare-content" id="compare-side-view" style="display: none;">
                 <div class="version-side">
                     <h4>Version ${data.version1.version_number} <small>(${formatDate(data.version1.created_at)})</small></h4>
                     <div class="version-content">${data.version1.content || '<em>Empty</em>'}</div>
@@ -1170,6 +1187,143 @@ function displayComparison(data) {
     `;
     
     viewer.innerHTML = html;
+}
+
+function generateDiffView(oldText, newText) {
+    // Strip HTML tags for comparison
+    const oldClean = stripHtml(oldText);
+    const newClean = stripHtml(newText);
+    
+    // Split into sentences for better diff granularity
+    const oldSentences = splitIntoSentences(oldClean);
+    const newSentences = splitIntoSentences(newClean);
+    
+    // Simple diff algorithm - find what's added, removed, or unchanged
+    const diff = computeDiff(oldSentences, newSentences);
+    
+    let diffHtml = '<div class="diff-container">';
+    
+    diff.forEach(part => {
+        if (part.type === 'unchanged') {
+            diffHtml += `<span class="diff-unchanged">${escapeHtml(part.text)}</span>`;
+        } else if (part.type === 'removed') {
+            diffHtml += `<span class="diff-removed">${escapeHtml(part.text)}</span>`;
+        } else if (part.type === 'added') {
+            diffHtml += `<span class="diff-added">${escapeHtml(part.text)}</span>`;
+        }
+    });
+    
+    diffHtml += '</div>';
+    
+    if (diff.length === 0 || (diff.length === 1 && diff[0].type === 'unchanged')) {
+        diffHtml = '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
+    }
+    
+    return diffHtml;
+}
+
+function stripHtml(html) {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || '';
+}
+
+function splitIntoSentences(text) {
+    // Split by sentence endings but keep the delimiters
+    return text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+}
+
+function computeDiff(oldArr, newArr) {
+    const diff = [];
+    let i = 0, j = 0;
+    
+    while (i < oldArr.length || j < newArr.length) {
+        if (i >= oldArr.length) {
+            // Remaining new items are additions
+            diff.push({ type: 'added', text: newArr[j] });
+            j++;
+        } else if (j >= newArr.length) {
+            // Remaining old items are deletions
+            diff.push({ type: 'removed', text: oldArr[i] });
+            i++;
+        } else if (oldArr[i].trim() === newArr[j].trim()) {
+            // Unchanged
+            diff.push({ type: 'unchanged', text: oldArr[i] });
+            i++;
+            j++;
+        } else {
+            // Look ahead to find matches
+            let foundMatch = false;
+            
+            // Check if current old item exists somewhere ahead in new array
+            for (let k = j + 1; k < Math.min(j + 5, newArr.length); k++) {
+                if (oldArr[i].trim() === newArr[k].trim()) {
+                    // Items before k are additions
+                    for (let m = j; m < k; m++) {
+                        diff.push({ type: 'added', text: newArr[m] });
+                    }
+                    diff.push({ type: 'unchanged', text: oldArr[i] });
+                    j = k + 1;
+                    i++;
+                    foundMatch = true;
+                    break;
+                }
+            }
+            
+            if (!foundMatch) {
+                // Check if current new item exists somewhere ahead in old array
+                for (let k = i + 1; k < Math.min(i + 5, oldArr.length); k++) {
+                    if (newArr[j].trim() === oldArr[k].trim()) {
+                        // Items before k are deletions
+                        for (let m = i; m < k; m++) {
+                            diff.push({ type: 'removed', text: oldArr[m] });
+                        }
+                        diff.push({ type: 'unchanged', text: newArr[j] });
+                        i = k + 1;
+                        j++;
+                        foundMatch = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!foundMatch) {
+                // No match found, treat as remove and add
+                diff.push({ type: 'removed', text: oldArr[i] });
+                diff.push({ type: 'added', text: newArr[j] });
+                i++;
+                j++;
+            }
+        }
+    }
+    
+    return diff;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function toggleCompareView(view, button) {
+    // Update active button
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    button.classList.add('active');
+    
+    // Show/hide views
+    const diffView = document.getElementById('compare-diff-view');
+    const sideView = document.getElementById('compare-side-view');
+    
+    if (view === 'diff') {
+        diffView.style.display = 'block';
+        sideView.style.display = 'none';
+    } else {
+        diffView.style.display = 'none';
+        sideView.style.display = 'grid';
+    }
 }
 
 function backToVersionList() {
@@ -1607,6 +1761,82 @@ function escapeHtml(text) {
     color: #333333;
 }
 
+/* Compare View Toggle */
+.compare-view-toggle {
+    display: flex;
+    gap: 8px;
+    padding: 0 20px;
+    margin-bottom: 20px;
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    background: #F5F5F5;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+    background: #E5E5E5;
+}
+
+.toggle-btn.active {
+    background: #111111;
+    color: white;
+}
+
+/* Diff View Styles */
+.diff-container {
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 1.8;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.diff-unchanged {
+    color: #333333;
+}
+
+.diff-removed {
+    background: #ffecec;
+    color: #c41e3a;
+    text-decoration: line-through;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin: 0 2px;
+}
+
+.diff-added {
+    background: #e6ffec;
+    color: #22863a;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin: 0 2px;
+}
+
+.no-changes {
+    text-align: center;
+    color: #999999;
+    font-style: italic;
+    padding: 40px;
+}
+
+#compare-side-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .version-modal-content {
@@ -1626,6 +1856,19 @@ function escapeHtml(text) {
     .btn-version-view,
     .btn-version-compare,
     .btn-version-restore {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    #compare-side-view {
+        grid-template-columns: 1fr;
+    }
+    
+    .compare-view-toggle {
+        flex-direction: column;
+    }
+    
+    .toggle-btn {
         width: 100%;
         justify-content: center;
     }
