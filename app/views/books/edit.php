@@ -872,7 +872,7 @@ function initializeSortable() {
             animation: 150,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
-            draggable: '.page-card-link',
+            handle: '.page-card',
             disabled: true, // Start disabled (edit mode is default)
             onEnd: function(evt) {
                 updatePageOrder();
@@ -886,7 +886,7 @@ function initializeSortable() {
             animation: 150,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
-            draggable: '.page-list-link',
+            handle: '.page-list-item',
             filter: '.list-header, .list-section',
             disabled: true, // Start disabled (edit mode is default)
             onEnd: function(evt) {
