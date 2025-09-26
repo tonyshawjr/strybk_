@@ -8,6 +8,24 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Security: Create a lock file after installation to prevent unauthorized access
+$lockFile = __DIR__ . '/install.lock';
+if (file_exists($lockFile) && !isset($_GET['unlock'])) {
+    die('
+        <div style="font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+            <h2 style="color: #dc3545;">🔒 Installer Locked</h2>
+            <p>For security, the installer has been locked after use.</p>
+            <p>To run updates:</p>
+            <ol>
+                <li>Delete the file: <code>/public/install/install.lock</code></li>
+                <li>Run your updates</li>
+                <li>The lock file will be recreated automatically</li>
+            </ol>
+            <p style="color: #6c757d; font-size: 0.9em;">This prevents unauthorized access to your installation system.</p>
+        </div>
+    ');
+}
+
 // Check installation status
 $configFile = __DIR__ . '/../../app/config.php';
 $isInstalled = file_exists($configFile);
@@ -130,6 +148,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Clear session
                 session_destroy();
+                
+                // Create lock file after successful installation
+                file_put_contents($lockFile, date('Y-m-d H:i:s') . ' - Installation completed');
                 
                 $success = true;
             } catch (Exception $e) {
@@ -439,6 +460,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 require_once __DIR__ . '/updater.php';
                 $updater = new DatabaseUpdater($config['db']);
                 if ($updater->run()) {
+                    // Create lock file after successful update
+                    file_put_contents($lockFile, date('Y-m-d H:i:s') . ' - Update completed');
+                    
                     echo '<div class="success">';
                     echo '<h2>✅ Update Complete!</h2>';
                     echo '<p>Your database has been updated successfully.</p>';
