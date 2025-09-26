@@ -1221,41 +1221,15 @@ function generateDiffView(oldText, newText) {
 }
 
 function findDifferences(oldText, newText) {
-    // Split text into words while preserving whitespace
+    // Split text into words while preserving whitespace and line breaks
     function getWords(text) {
-        // This will split on word boundaries but keep the words intact
-        const words = [];
-        let currentWord = '';
-        let inWord = false;
-        
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            const isWordChar = /[a-zA-Z0-9']/.test(char);
-            
-            if (isWordChar) {
-                if (!inWord && currentWord) {
-                    // Push non-word characters
-                    words.push(currentWord);
-                    currentWord = '';
-                }
-                currentWord += char;
-                inWord = true;
-            } else {
-                if (inWord && currentWord) {
-                    // Push word
-                    words.push(currentWord);
-                    currentWord = '';
-                }
-                currentWord += char;
-                inWord = false;
-            }
-        }
-        
-        if (currentWord) {
-            words.push(currentWord);
-        }
-        
-        return words;
+        // This regex matches:
+        // - Words (\w+)
+        // - Newlines (\n)
+        // - Spaces and tabs ([ \t]+) 
+        // - Any other single character
+        const tokens = text.match(/\w+|\n|[ \t]+|./g) || [];
+        return tokens;
     }
     
     const oldWords = getWords(oldText);
@@ -1276,7 +1250,11 @@ function findDifferences(oldText, newText) {
             i++;
         } else if (oldWords[i] === newWords[j]) {
             // Content matches
-            result += escapeHtml(oldWords[i]);
+            if (oldWords[i] === '\n') {
+                result += '<br>';
+            } else {
+                result += escapeHtml(oldWords[i]);
+            }
             i++;
             j++;
         } else {
@@ -1300,17 +1278,41 @@ function findDifferences(oldText, newText) {
                 }
             }
             
-            // Decide whether it's an insertion, deletion, or replacement
-            if (nextMatchNew !== -1 && (nextMatchOld === -1 || nextMatchNew - j < nextMatchOld - i)) {
+            // Check for line breaks - don't combine across lines
+            const oldIsNewline = oldWords[i] === '\n';
+            const newIsNewline = newWords[j] === '\n';
+            
+            if (oldIsNewline && newIsNewline) {
+                // Both are newlines, just output one
+                result += '<br>';
+                i++;
+                j++;
+            } else if (oldIsNewline) {
+                // Old has newline, new doesn't - show the newline and continue
+                result += '<br>';
+                i++;
+            } else if (newIsNewline) {
+                // New has newline, old doesn't - show the newline and continue
+                result += '<br>';
+                j++;
+            } else if (nextMatchNew !== -1 && (nextMatchOld === -1 || nextMatchNew - j < nextMatchOld - i)) {
                 // Insertion - show all new words until the match
                 while (j < nextMatchNew) {
-                    result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+                    if (newWords[j] === '\n') {
+                        result += '<br>';
+                    } else {
+                        result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+                    }
                     j++;
                 }
             } else if (nextMatchOld !== -1) {
                 // Deletion - show all old words until the match
                 while (i < nextMatchOld) {
-                    result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+                    if (oldWords[i] === '\n') {
+                        result += '<br>';
+                    } else {
+                        result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+                    }
                     i++;
                 }
             } else {
