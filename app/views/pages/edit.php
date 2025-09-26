@@ -1210,132 +1210,111 @@ function generateDiffView(oldText, newText) {
         return '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
     }
     
-    // Just show what changed in a simple way
-    let diffHtml = '<div class="diff-container">';
+    // Simple word-by-word diff
+    const result = simpleWordDiff(oldClean, newClean);
     
-    // Show a simple before/after for clarity
-    const maxLength = 500; // Show first 500 chars to keep it readable
-    
-    diffHtml += '<div style="margin: 20px; line-height: 1.6;">';
-    diffHtml += '<h4 style="color: #666; margin-bottom: 10px;">Changes:</h4>';
-    
-    // Find what's different
-    const oldShort = oldClean.substring(0, maxLength);
-    const newShort = newClean.substring(0, maxLength);
-    
-    if (oldClean.length <= maxLength && newClean.length <= maxLength) {
-        // Short enough to show everything
-        diffHtml += '<div style="margin-bottom: 15px;">';
-        diffHtml += '<strong>From:</strong><br>';
-        diffHtml += `<span class="diff-removed">${escapeHtml(oldClean)}</span>`;
-        diffHtml += '</div>';
-        diffHtml += '<div>';
-        diffHtml += '<strong>To:</strong><br>';
-        diffHtml += `<span class="diff-added">${escapeHtml(newClean)}</span>`;
-        diffHtml += '</div>';
-    } else {
-        // Too long, show summary
-        diffHtml += `<p style="color: #999;">Content is too long to show full diff. Showing first ${maxLength} characters...</p>`;
-        diffHtml += '<div style="margin-bottom: 15px;">';
-        diffHtml += '<strong>From:</strong><br>';
-        diffHtml += `<span class="diff-removed">${escapeHtml(oldShort)}...</span>`;
-        diffHtml += '</div>';
-        diffHtml += '<div>';
-        diffHtml += '<strong>To:</strong><br>';
-        diffHtml += `<span class="diff-added">${escapeHtml(newShort)}...</span>`;
-        diffHtml += '</div>';
-    }
-    
+    let diffHtml = '<div class="diff-container"><div class="diff-text">';
+    diffHtml += result;
     diffHtml += '</div></div>';
     
     return diffHtml;
 }
 
-function findDifferences(oldText, newText) {
-    // If identical, return as-is
-    if (oldText === newText) {
-        return escapeHtml(oldText);
-    }
+function simpleWordDiff(oldText, newText) {
+    // Split into words but keep punctuation and spaces
+    const oldWords = oldText.split(/(\s+)/);
+    const newWords = newText.split(/(\s+)/);
     
-    // For very small changes, just show both versions
-    if (Math.abs(oldText.length - newText.length) > 100) {
-        // Large change - just show summary
-        return `
-            <div style="margin: 10px 0;">
-                <div style="margin-bottom: 10px;">
-                    <strong>Previous version (${oldText.length} characters):</strong><br>
-                    <span class="diff-removed">${escapeHtml(oldText.substring(0, 200))}...</span>
-                </div>
-                <div>
-                    <strong>Current version (${newText.length} characters):</strong><br>
-                    <span class="diff-added">${escapeHtml(newText.substring(0, 200))}...</span>
-                </div>
-            </div>
-        `;
-    }
+    // Find the Longest Common Subsequence
+    const lcs = getLCS(oldWords, newWords);
     
-    // Use a simple LCS (Longest Common Subsequence) approach at word level
-    const oldWords = oldText.split(/\b/);
-    const newWords = newText.split(/\b/);
-    
-    // Create a simple diff
     let result = '';
-    let i = 0, j = 0;
+    let oldIdx = 0;
+    let newIdx = 0;
+    let lcsIdx = 0;
     
-    while (i < oldWords.length || j < newWords.length) {
-        // Skip matching words
-        while (i < oldWords.length && j < newWords.length && oldWords[i] === newWords[j]) {
-            result += escapeHtml(oldWords[i]);
-            i++;
-            j++;
-        }
-        
-        // Collect differences
-        let oldDiff = '';
-        let newDiff = '';
-        
-        // Look for next match
-        let foundMatch = false;
-        for (let lookAhead = 1; lookAhead <= 5 && !foundMatch; lookAhead++) {
-            if (i + lookAhead < oldWords.length && j + lookAhead < newWords.length && 
-                oldWords[i + lookAhead] === newWords[j + lookAhead]) {
-                // Found a match ahead
-                while (i < i + lookAhead && i < oldWords.length) {
-                    oldDiff += oldWords[i++];
-                }
-                while (j < j + lookAhead && j < newWords.length) {
-                    newDiff += newWords[j++];
-                }
-                foundMatch = true;
+    while (oldIdx < oldWords.length || newIdx < newWords.length) {
+        // Check if we have a common word
+        if (lcsIdx < lcs.length && 
+            oldIdx < oldWords.length && 
+            newIdx < newWords.length && 
+            oldWords[oldIdx] === lcs[lcsIdx] && 
+            newWords[newIdx] === lcs[lcsIdx]) {
+            // Common word
+            result += escapeHtml(oldWords[oldIdx]);
+            oldIdx++;
+            newIdx++;
+            lcsIdx++;
+        } else {
+            // Find what's different
+            let oldDiff = '';
+            let newDiff = '';
+            
+            // Collect old words until next match
+            while (oldIdx < oldWords.length && 
+                   (lcsIdx >= lcs.length || oldWords[oldIdx] !== lcs[lcsIdx])) {
+                oldDiff += oldWords[oldIdx++];
             }
-        }
-        
-        if (!foundMatch) {
-            // No match found, consume one word from each
-            if (i < oldWords.length) oldDiff = oldWords[i++];
-            if (j < newWords.length) newDiff = newWords[j++];
-        }
-        
-        // Show the differences
-        if (oldDiff && !newDiff) {
-            result += `<span class="diff-removed">${escapeHtml(oldDiff)}</span>`;
-        } else if (!oldDiff && newDiff) {
-            result += `<span class="diff-added">${escapeHtml(newDiff)}</span>`;
-        } else if (oldDiff && newDiff) {
-            if (oldDiff.trim() || newDiff.trim()) {
+            
+            // Collect new words until next match
+            while (newIdx < newWords.length && 
+                   (lcsIdx >= lcs.length || newWords[newIdx] !== lcs[lcsIdx])) {
+                newDiff += newWords[newIdx++];
+            }
+            
+            // Display the differences
+            if (oldDiff && !newDiff) {
+                // Deletion
                 result += `<span class="diff-removed">${escapeHtml(oldDiff)}</span>`;
-                if (oldDiff.trim() && newDiff.trim()) {
-                    result += ' → ';
-                }
+            } else if (!oldDiff && newDiff) {
+                // Addition
                 result += `<span class="diff-added">${escapeHtml(newDiff)}</span>`;
-            } else {
-                result += oldDiff; // Just whitespace
+            } else if (oldDiff && newDiff) {
+                // Replacement
+                result += `<span class="diff-removed">${escapeHtml(oldDiff)}</span>`;
+                result += `<span class="diff-added">${escapeHtml(newDiff)}</span>`;
             }
         }
     }
     
     return result;
 }
+
+function getLCS(arr1, arr2) {
+    const m = arr1.length;
+    const n = arr2.length;
+    const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+    
+    // Build the LCS length table
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            if (arr1[i - 1] === arr2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    
+    // Reconstruct the LCS
+    const lcs = [];
+    let i = m, j = n;
+    while (i > 0 && j > 0) {
+        if (arr1[i - 1] === arr2[j - 1]) {
+            lcs.unshift(arr1[i - 1]);
+            i--;
+            j--;
+        } else if (dp[i - 1][j] > dp[i][j - 1]) {
+            i--;
+        } else {
+            j--;
+        }
+    }
+    
+    return lcs;
+}
+
+// Removed old findDifferences function - using simpleWordDiff instead
 
 function computeWordDiff(oldWords, newWords) {
     const diff = [];
