@@ -28,13 +28,23 @@ include __DIR__ . '/../partials/header.php';
                 
                 <!-- Controls Section -->
                 <div class="book-controls">
-                    <!-- Privacy Toggle -->
-                    <button class="visibility-toggle <?= $book['is_public'] ? 'public' : 'private' ?>" 
-                            data-book-id="<?= $book['id'] ?>"
-                            data-current="<?= $book['is_public'] ? 'public' : 'private' ?>"
-                            onclick="toggleVisibility(this)">
-                        <i class="fa-solid <?= $book['is_public'] ? 'fa-globe' : 'fa-lock' ?>"></i>
-                    </button>
+                    <!-- Privacy Toggle Switch (like toolbar) -->
+                    <div class="visibility-mode-toggle">
+                        <input type="checkbox" 
+                               id="visibility-toggle" 
+                               class="toggle-input" 
+                               <?= $book['is_public'] ? 'checked' : '' ?>
+                               data-book-id="<?= $book['id'] ?>">
+                        <label for="visibility-toggle" class="toggle-label">
+                            <span class="toggle-icon private-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <span class="toggle-icon public-icon">
+                                <i class="fa-solid fa-globe"></i>
+                            </span>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                     
                     <!-- View Book Button -->
                     <?php if ($book['is_public']): ?>
@@ -231,7 +241,7 @@ function getBookColor($title) {
     margin: 0 0 16px 0;
 }
 
-/*/* Book Controls */
+/* Book Controls */
 .book-controls {
     display: flex;
     align-items: center;
@@ -239,36 +249,73 @@ function getBookColor($title) {
     margin-bottom: 16px;
 }
 
-/* Visibility Toggle Button */
-.visibility-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
+/* Visibility Toggle Switch (like toolbar) */
+.visibility-mode-toggle {
+    position: relative;
+    display: inline-block;
+    width: 72px;
     height: 36px;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 18px;
 }
 
-.visibility-toggle.private {
+.visibility-mode-toggle .toggle-input {
+    display: none;
+}
+
+.visibility-mode-toggle .toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    background: #F5F5F5;
+    border-radius: 8px;
+    padding: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+.visibility-mode-toggle .toggle-slider {
+    position: absolute;
+    width: 32px;
+    height: 28px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    left: 4px;
+}
+
+.visibility-mode-toggle .toggle-icon {
+    width: 32px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.visibility-mode-toggle .private-icon {
+    color: #111111;
+}
+
+.visibility-mode-toggle .public-icon {
     color: #666666;
 }
 
-.visibility-toggle.private:hover {
-    background: #F5F5F5;
-    color: #111111;
+/* Checked state (public) */
+.visibility-mode-toggle .toggle-input:checked + .toggle-label .toggle-slider {
+    transform: translateX(36px);
 }
 
-.visibility-toggle.public {
-    color: #111111;
+.visibility-mode-toggle .toggle-input:checked + .toggle-label .private-icon {
+    color: #666666;
 }
 
-.visibility-toggle.public:hover {
-    background: #F5F5F5;
+.visibility-mode-toggle .toggle-input:checked + .toggle-label .public-icon {
+    color: #111111;
 }
 
 /* View Book Button */
@@ -816,16 +863,16 @@ function updatePageOrder() {
     });
 }
 
-// Toggle visibility function
-function toggleVisibility(button) {
-    const bookId = button.dataset.bookId;
-    const current = button.dataset.current;
+// Visibility toggle handler
+document.getElementById('visibility-toggle')?.addEventListener('change', function() {
+    const bookId = this.dataset.bookId;
+    const isPublic = this.checked;
+    const toggleInput = this;
     
-    // Disable button during update
-    button.disabled = true;
-    button.style.opacity = '0.5';
+    // Disable during update
+    toggleInput.disabled = true;
     
-    // Send update to server first
+    // Send update to server
     fetch('/books/' + bookId + '/visibility', {
         method: 'POST',
         headers: {
@@ -835,34 +882,23 @@ function toggleVisibility(button) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Update UI only after successful server update
-            const newStatus = data.is_public ? 'public' : 'private';
+            const actualStatus = data.is_public;
             
-            // Update button classes and icon
-            if (newStatus === 'public') {
-                button.classList.remove('private');
-                button.classList.add('public');
-                button.innerHTML = '<i class="fa-solid fa-globe"></i>';
-            } else {
-                button.classList.remove('public');
-                button.classList.add('private');
-                button.innerHTML = '<i class="fa-solid fa-lock"></i>';
-            }
-            
-            button.dataset.current = newStatus;
+            // Update toggle if server state differs
+            toggleInput.checked = actualStatus;
             
             // Handle view button and public link visibility
             const viewBtn = document.querySelector('.view-book-btn');
             const publicLink = document.querySelector('.public-link-section');
             
-            if (newStatus === 'public') {
+            if (actualStatus) {
                 // Show view button if not exists
                 if (!viewBtn) {
-                    const controlsDiv = document.querySelector('.book-controls');
+                    const toggle = document.querySelector('.visibility-mode-toggle');
                     const viewHtml = `<a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-btn" title="View Book">
                         <i class="fa-regular fa-eye"></i>
                     </a>`;
-                    button.insertAdjacentHTML('afterend', viewHtml);
+                    toggle.insertAdjacentHTML('afterend', viewHtml);
                 }
                 
                 // Show public link if not exists
@@ -883,20 +919,20 @@ function toggleVisibility(button) {
                 publicLink?.remove();
             }
         } else {
-            console.error('Failed to update visibility');
+            // Revert toggle on error
+            toggleInput.checked = !isPublic;
             alert('Failed to update book visibility. Please try again.');
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        toggleInput.checked = !isPublic;
         alert('An error occurred. Please try again.');
     })
     .finally(() => {
-        // Re-enable button
-        button.disabled = false;
-        button.style.opacity = '';
+        toggleInput.disabled = false;
     });
-}
+})
 
 // Copy link function
 function copyLink(button) {
