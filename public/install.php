@@ -50,7 +50,7 @@ $mode = $isInstalled ? 'update' : 'install';
 // If installed, load config for updates
 if ($isInstalled) {
     require_once $configFile;
-    require_once $appPath . '/Database.php';
+    // Database class is included via autoload in config, no need to require it separately
 }
 
 // Handle update mode
