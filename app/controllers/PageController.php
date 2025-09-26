@@ -9,6 +9,7 @@ class PageController {
     private Auth $auth;
     private Book $bookModel;
     private Page $pageModel;
+    private PageVersion $versionModel;
     private array $config;
     
     public function __construct(Database $db, Auth $auth, array $config) {
@@ -17,6 +18,7 @@ class PageController {
         $this->config = $config;
         $this->bookModel = new Book($db);
         $this->pageModel = new Page($db);
+        $this->versionModel = new PageVersion($db);
     }
     
     /**
@@ -215,6 +217,16 @@ class PageController {
                 'word_count' => $wordCount
             ]);
             
+            // Create a version record for this update
+            $this->versionModel->createVersion($id, [
+                'book_id' => $page['book_id'],
+                'user_id' => $userId,
+                'title' => $title,
+                'content' => $content,
+                'word_count' => $wordCount,
+                'kind' => $kind
+            ]);
+            
             // Check if this is an AJAX request
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -366,5 +378,136 @@ class PageController {
         
         flash('Error uploading file.', 'error');
         return null;
+    }
+    
+    /**
+     * Show version history for a page
+     */
+    public function history(int $id): void {
+        $this->auth->requireAuth();
+        $userId = $this->auth->user()['id'];
+        
+        $page = $this->pageModel->find($id);
+        
+        if (!$page) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['error' => 'Page not found']);
+            return;
+        }
+        
+        // Check book ownership
+        if (!$this->bookModel->isOwner($page['book_id'], $userId)) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            return;
+        }
+        
+        // Get all versions
+        $versions = $this->versionModel->getPageVersions($id);
+        $stats = $this->versionModel->getVersionStats($id);
+        
+        // Return JSON response
+        header('Content-Type: application/json');
+        echo json_encode([
+            'page' => $page,
+            'versions' => $versions,
+            'stats' => $stats
+        ]);
+    }
+    
+    /**
+     * View a specific version
+     */
+    public function viewVersion(int $pageId, int $versionNumber): void {
+        $this->auth->requireAuth();
+        $userId = $this->auth->user()['id'];
+        
+        $page = $this->pageModel->find($pageId);
+        
+        if (!$page || !$this->bookModel->isOwner($page['book_id'], $userId)) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['error' => 'Version not found']);
+            return;
+        }
+        
+        $version = $this->versionModel->getVersion($pageId, $versionNumber);
+        
+        if (!$version) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['error' => 'Version not found']);
+            return;
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode($version);
+    }
+    
+    /**
+     * Compare two versions
+     */
+    public function compareVersions(int $pageId): void {
+        $this->auth->requireAuth();
+        $userId = $this->auth->user()['id'];
+        
+        $page = $this->pageModel->find($pageId);
+        
+        if (!$page || !$this->bookModel->isOwner($page['book_id'], $userId)) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['error' => 'Page not found']);
+            return;
+        }
+        
+        $v1 = (int)($_GET['v1'] ?? 0);
+        $v2 = (int)($_GET['v2'] ?? 0);
+        
+        if (!$v1 || !$v2) {
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode(['error' => 'Version numbers required']);
+            return;
+        }
+        
+        $comparison = $this->versionModel->compareVersions($pageId, $v1, $v2);
+        
+        header('Content-Type: application/json');
+        echo json_encode($comparison);
+    }
+    
+    /**
+     * Restore a specific version
+     */
+    public function restoreVersion(int $pageId, int $versionNumber): void {
+        $this->auth->requireAuth();
+        $this->auth->checkCsrf();
+        $userId = $this->auth->user()['id'];
+        
+        $page = $this->pageModel->find($pageId);
+        
+        if (!$page || !$this->bookModel->isOwner($page['book_id'], $userId)) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['error' => 'Page not found']);
+            return;
+        }
+        
+        if ($this->versionModel->restoreVersion($pageId, $versionNumber, $userId)) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'message' => 'Version restored successfully'
+            ]);
+        } else {
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to restore version'
+            ]);
+        }
     }
 }

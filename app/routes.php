@@ -42,6 +42,12 @@ class Router {
         $this->routes['POST']['/pages/{id}/delete'] = 'PageController@delete';
         $this->routes['POST']['/books/{book_id}/pages/reorder'] = 'PageController@reorder';
         
+        // Version history routes
+        $this->routes['GET']['/pages/{id}/history'] = 'PageController@history';
+        $this->routes['GET']['/pages/{page_id}/version/{version}'] = 'PageController@viewVersion';
+        $this->routes['GET']['/pages/{page_id}/compare'] = 'PageController@compareVersions';
+        $this->routes['POST']['/pages/{page_id}/restore/{version}'] = 'PageController@restoreVersion';
+        
         // Public book viewing
         $this->routes['GET']['/read/{book_slug}'] = 'ReadController@show';
         $this->routes['GET']['/read/{book_slug}/{page_slug}'] = 'ReadController@show';

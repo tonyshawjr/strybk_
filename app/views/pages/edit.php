@@ -789,7 +789,7 @@ document.querySelectorAll('.toolbar-btn').forEach(btn => {
                 document.getElementById('page-form').requestSubmit();
                 break;
             case 'history':
-                alert('Version history coming soon');
+                openVersionHistory();
                 break;
             case 'chevrons':
                 // Custom formatting
@@ -931,6 +931,543 @@ document.addEventListener('keydown', function(e) {
         document.execCommand('italic', false, null);
     }
 });
+// Version History Modal Functions
+function openVersionHistory() {
+    const pageId = <?= $page['id'] ?>;
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('version-history-modal');
+    if (!modal) {
+        modal = createVersionHistoryModal();
+        document.body.appendChild(modal);
+    }
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Load version history
+    loadVersionHistory(pageId);
+}
+
+function createVersionHistoryModal() {
+    const modal = document.createElement('div');
+    modal.id = 'version-history-modal';
+    modal.className = 'version-modal';
+    modal.innerHTML = `
+        <div class="version-modal-content">
+            <div class="version-modal-header">
+                <h2>Version History</h2>
+                <button class="close-modal" onclick="closeVersionHistory()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="version-modal-body">
+                <div class="version-loading">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Loading versions...
+                </div>
+                <div class="version-list" id="version-list" style="display: none;"></div>
+                <div class="version-viewer" id="version-viewer" style="display: none;"></div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+function closeVersionHistory() {
+    const modal = document.getElementById('version-history-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function loadVersionHistory(pageId) {
+    fetch(`/pages/${pageId}/history`)
+        .then(response => response.json())
+        .then(data => {
+            displayVersionList(data);
+        })
+        .catch(error => {
+            console.error('Error loading version history:', error);
+            document.querySelector('.version-loading').innerHTML = 
+                '<p style="color: #ef4444;">Error loading version history</p>';
+        });
+}
+
+function displayVersionList(data) {
+    const loader = document.querySelector('.version-loading');
+    const list = document.getElementById('version-list');
+    
+    loader.style.display = 'none';
+    list.style.display = 'block';
+    
+    if (!data.versions || data.versions.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: #999;">No version history available yet.</p>';
+        return;
+    }
+    
+    let html = '<div class="version-stats">';
+    if (data.stats) {
+        html += `
+            <div class="stat-item">
+                <span class="stat-label">Total Versions:</span>
+                <span class="stat-value">${data.stats.total_versions || 0}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">First Version:</span>
+                <span class="stat-value">${formatDate(data.stats.first_version_date)}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Latest Version:</span>
+                <span class="stat-value">${formatDate(data.stats.last_version_date)}</span>
+            </div>
+        `;
+    }
+    html += '</div>';
+    
+    html += '<div class="version-items">';
+    data.versions.forEach((version, index) => {
+        const isCurrent = index === 0;
+        html += `
+            <div class="version-item ${isCurrent ? 'current' : ''}">
+                <div class="version-header">
+                    <div class="version-info">
+                        <span class="version-number">Version ${version.version_number}</span>
+                        ${isCurrent ? '<span class="version-badge">Current</span>' : ''}
+                    </div>
+                    <div class="version-meta">
+                        <span class="version-author">${version.author_name || 'Unknown'}</span>
+                        <span class="version-date">${formatDate(version.created_at)}</span>
+                    </div>
+                </div>
+                <div class="version-title">${escapeHtml(version.title)}</div>
+                <div class="version-stats-inline">
+                    <span>${version.word_count || 0} words</span>
+                </div>
+                <div class="version-actions">
+                    <button class="btn-version-view" onclick="viewVersion(${data.page.id}, ${version.version_number})">
+                        <i class="fa-solid fa-eye"></i> View
+                    </button>
+                    ${!isCurrent ? `
+                        <button class="btn-version-compare" onclick="compareWithCurrent(${data.page.id}, ${version.version_number})">
+                            <i class="fa-solid fa-code-compare"></i> Compare
+                        </button>
+                        <button class="btn-version-restore" onclick="confirmRestore(${data.page.id}, ${version.version_number})">
+                            <i class="fa-solid fa-undo"></i> Restore
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    list.innerHTML = html;
+}
+
+function viewVersion(pageId, versionNumber) {
+    const viewer = document.getElementById('version-viewer');
+    const list = document.getElementById('version-list');
+    
+    fetch(`/pages/${pageId}/version/${versionNumber}`)
+        .then(response => response.json())
+        .then(version => {
+            list.style.display = 'none';
+            viewer.style.display = 'block';
+            viewer.innerHTML = `
+                <div class="version-view-header">
+                    <button class="btn-back" onclick="backToVersionList()">
+                        <i class="fa-solid fa-arrow-left"></i> Back to History
+                    </button>
+                    <div class="version-view-title">
+                        <h3>Version ${version.version_number}</h3>
+                        <span class="version-view-meta">
+                            by ${version.author_name || 'Unknown'} on ${formatDate(version.created_at)}
+                        </span>
+                    </div>
+                </div>
+                <div class="version-view-content">
+                    <h4>${escapeHtml(version.title)}</h4>
+                    <div class="version-content-body">${version.content || '<p style="color: #999;">No content</p>'}</div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Error loading version:', error);
+            viewer.innerHTML = '<p style="color: #ef4444; text-align: center;">Error loading version</p>';
+        });
+}
+
+function backToVersionList() {
+    document.getElementById('version-viewer').style.display = 'none';
+    document.getElementById('version-list').style.display = 'block';
+}
+
+function compareWithCurrent(pageId, versionNumber) {
+    alert('Version comparison view coming soon!');
+    // TODO: Implement diff view
+}
+
+function confirmRestore(pageId, versionNumber) {
+    if (confirm(`Are you sure you want to restore Version ${versionNumber}? This will create a new version with the content from Version ${versionNumber}.`)) {
+        restoreVersion(pageId, versionNumber);
+    }
+}
+
+function restoreVersion(pageId, versionNumber) {
+    const csrfToken = document.querySelector('input[name="_token"]').value;
+    
+    fetch(`/pages/${pageId}/restore/${versionNumber}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `_token=${encodeURIComponent(csrfToken)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Version restored successfully!');
+            closeVersionHistory();
+            location.reload(); // Reload to show restored content
+        } else {
+            alert('Failed to restore version: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error restoring version:', error);
+        alert('Error restoring version');
+    });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>
+
+<style>
+/* Version History Modal Styles */
+.version-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.version-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.version-modal-header {
+    padding: 24px;
+    border-bottom: 1px solid #E5E5E5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.version-modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #111111;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999999;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.close-modal:hover {
+    background: #F5F5F5;
+    color: #111111;
+}
+
+.version-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.version-loading {
+    text-align: center;
+    padding: 48px;
+    color: #999999;
+}
+
+.version-loading i {
+    font-size: 32px;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.version-stats {
+    display: flex;
+    gap: 24px;
+    padding: 16px;
+    background: #F5F5F5;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #999999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: 14px;
+    color: #111111;
+    font-weight: 600;
+}
+
+.version-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.version-item {
+    padding: 16px;
+    border: 1px solid #E5E5E5;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.version-item:hover {
+    border-color: #111111;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.version-item.current {
+    background: #F0FDF4;
+    border-color: #10b981;
+}
+
+.version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.version-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.version-number {
+    font-weight: 600;
+    color: #111111;
+}
+
+.version-badge {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.version-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #999999;
+}
+
+.version-title {
+    font-size: 16px;
+    color: #333333;
+    margin-bottom: 8px;
+}
+
+.version-stats-inline {
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 12px;
+}
+
+.version-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-version-view,
+.btn-version-compare,
+.btn-version-restore {
+    padding: 6px 12px;
+    border: 1px solid #E5E5E5;
+    background: white;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-version-view:hover {
+    background: #F5F5F5;
+    border-color: #111111;
+}
+
+.btn-version-compare:hover {
+    background: #EFF6FF;
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.btn-version-restore:hover {
+    background: #FEF2F2;
+    border-color: #EF4444;
+    color: #EF4444;
+}
+
+/* Version Viewer Styles */
+.version-view-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.btn-back {
+    padding: 8px 16px;
+    background: #F5F5F5;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    background: #E5E5E5;
+}
+
+.version-view-title h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #111111;
+}
+
+.version-view-meta {
+    font-size: 14px;
+    color: #999999;
+}
+
+.version-view-content {
+    padding: 24px;
+    background: #FAFAFA;
+    border-radius: 8px;
+}
+
+.version-view-content h4 {
+    margin: 0 0 16px 0;
+    font-size: 24px;
+    color: #111111;
+}
+
+.version-content-body {
+    font-family: 'Georgia', serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: #333333;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .version-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .version-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .version-actions {
+        flex-direction: column;
+    }
+    
+    .btn-version-view,
+    .btn-version-compare,
+    .btn-version-restore {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>
