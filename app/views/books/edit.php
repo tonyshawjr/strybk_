@@ -644,11 +644,20 @@ function getBookColor($title) {
 .page-list-item {
     display: flex;
     align-items: baseline;
-    padding: 8px 0;
+    padding: 12px 0;
     border: none;
-    border-bottom: 1px dotted #E5E5E5;
     transition: all 0.2s ease;
     position: relative;
+}
+
+.page-list-item:after {
+    content: '';
+    position: absolute;
+    bottom: 50%;
+    left: 0;
+    right: 0;
+    border-bottom: 1px dotted #E5E5E5;
+    z-index: 0;
 }
 
 .page-list-item:last-child {
@@ -696,28 +705,34 @@ function getBookColor($title) {
 .page-list-item.active::before {
     content: '';
     position: absolute;
-    left: -12px;
-    width: 4px;
-    height: 100%;
-    background: #FF6B35;
-    border-radius: 2px;
+    left: -16px;
+    width: 8px;
+    height: 8px;
+    background: #111111;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .page-title {
-    flex: 1;
     color: #111111;
     font-size: 15px;
     font-weight: 400;
-    line-height: 1.8;
-    padding-right: 16px;
+    line-height: 1.6;
+    padding-right: 8px;
+    background: white;
+    z-index: 1;
+    position: relative;
 }
 
 .page-word-count {
     color: #999999;
     font-size: 14px;
     margin-left: auto;
-    text-align: right;
-    min-width: 80px;
+    padding-left: 8px;
+    background: white;
+    z-index: 1;
+    position: relative;
 }
 
 .list-section {
