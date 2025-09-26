@@ -19,9 +19,9 @@ class HomeController {
      * Display the homepage
      */
     public function index(): void {
-        // If user is logged in, redirect to dashboard
+        // If user is logged in, redirect to books
         if ($this->auth->check()) {
-            redirect('/dashboard');
+            redirect('/books');
             return;
         }
         

@@ -33,8 +33,8 @@ class AuthController {
         $password = $_POST['password'] ?? '';
         
         if ($this->auth->attempt($email, $password)) {
-            // Redirect to intended page or dashboard
-            $redirect = $_SESSION['redirect_after_login'] ?? '/dashboard';
+            // Redirect to intended page or books
+            $redirect = $_SESSION['redirect_after_login'] ?? '/books';
             unset($_SESSION['redirect_after_login']);
             redirect($redirect);
         } else {

@@ -5,123 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'Strybk') ?> - Strybk</title>
     
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Core CSS -->
     <link rel="stylesheet" href="/css/app.css">
     
     <!-- Component-specific styles -->
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            background: var(--gray-50);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #FFFFFF;
+            color: #111111;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
-        .navbar {
-            background: var(--white);
-            box-shadow: var(--shadow-base);
-            padding: var(--space-4) 0;
-            margin-bottom: var(--space-8);
-        }
-        
-        .navbar-inner {
-            max-width: var(--container-xl);
+        /* Main container for all content */
+        .page-container {
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 0 var(--space-4);
+            padding: 0 24px;
+        }
+        
+        /* Simple header */
+        .header {
+            padding: 40px 0;
+            margin-bottom: 40px;
+        }
+        
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
-        .navbar-brand {
-            font-size: var(--text-2xl);
-            font-weight: 700;
-            color: var(--purple);
+        .logo {
+            font-size: 32px;
+            font-weight: 600;
+            color: #111111;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
+            letter-spacing: -0.02em;
         }
         
-        .navbar-brand:hover {
-            color: var(--purple-dark);
+        .logo:hover {
+            opacity: 0.8;
         }
         
-        .navbar-nav {
-            display: flex;
-            gap: var(--space-8);
-            align-items: center;
-            list-style: none;
-            margin: 0;
-            padding: 0;
+        .logout-button {
+            background: none;
+            border: 1px solid #E5E5E5;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666666;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .navbar-nav li {
-            margin: 0;
+        .logout-button:hover {
+            border-color: #111111;
+            color: #111111;
         }
         
-        .navbar-user {
-            color: var(--gray-500);
-            font-size: var(--text-sm);
-        }
-        
-        .navbar-logout {
+        .logout-form {
             display: inline;
         }
         
-        .navbar-logout .btn {
-            background: var(--gray-600);
+        /* Container override */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
         
-        .navbar-logout .btn:hover {
-            background: var(--gray-700);
+        /* Flash messages */
+        .flash-container {
+            max-width: 1280px;
+            margin: 0 auto 24px;
+            padding: 0 24px;
         }
         
-        /* Mobile Navigation */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #D4EDDA;
+            color: #155724;
+            border: 1px solid #C3E6CB;
+        }
+        
+        .alert-error {
+            background: #F8D7DA;
+            color: #721C24;
+            border: 1px solid #F5C6CB;
+        }
+        
+        /* Mobile */
         @media (max-width: 768px) {
-            .navbar-inner {
-                flex-direction: column;
-                gap: var(--space-4);
+            .page-container {
+                padding: 0 16px;
             }
             
-            .navbar-nav {
-                width: 100%;
-                justify-content: center;
-                gap: var(--space-4);
-                flex-wrap: wrap;
+            .header {
+                padding: 24px 0;
+                margin-bottom: 24px;
+            }
+            
+            .logo {
+                font-size: 24px;
             }
         }
     </style>
 </head>
 <body>
     <?php if ($auth->check()): ?>
-    <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="/dashboard" class="navbar-brand">
-                📚 Strybk
-            </a>
-            <ul class="navbar-nav">
-                <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
-                <li><a href="/books" class="nav-link">Books</a></li>
-                <li>
-                    <span class="navbar-user">
-                        <?= htmlspecialchars($auth->user()['name'] ?? $auth->user()['email']) ?>
-                    </span>
-                </li>
-                <li>
-                    <form method="POST" action="/logout" class="navbar-logout">
-                        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-                        <button type="submit" class="btn btn-sm">
-                            Logout
-                        </button>
-                    </form>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    <div class="page-container">
+        <header class="header">
+            <div class="header-content">
+                <a href="/books" class="logo">strybk</a>
+                <form method="POST" action="/logout" class="logout-form">
+                    <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
+                    <button type="submit" class="logout-button">Logout</button>
+                </form>
+            </div>
+        </header>
+    </div>
     <?php endif; ?>
     
     <?php if (isset($_SESSION['flash'])): ?>
-        <div class="container">
+        <div class="flash-container">
             <?php foreach ($_SESSION['flash'] as $flash): ?>
-                <div class="alert alert-<?= $flash['type'] ?> animate-slideIn">
+                <div class="alert alert-<?= $flash['type'] ?>">
                     <?= htmlspecialchars($flash['message']) ?>
                 </div>
             <?php endforeach; ?>

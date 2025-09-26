@@ -1,9 +1,6 @@
 <?php include __DIR__ . '/../partials/header.php'; ?>
 
 <div class="container">
-    <div class="library-header">
-        <h1>My Library</h1>
-    </div>
 
     <div class="books-grid">
         <?php foreach ($books as $book): ?>
@@ -82,21 +79,12 @@ function getBookColor($title) {
 ?>
 
 <style>
-.library-header {
-    margin-bottom: 3rem;
-}
-
-.library-header h1 {
-    font-size: 2.5rem;
-    color: var(--gray-900);
-    margin: 0;
-}
-
 .books-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 3rem;
-    margin-bottom: 4rem;
+    gap: 48px;
+    margin-bottom: 80px;
+    padding-top: 20px;
 }
 
 .book-card-link {
@@ -117,18 +105,19 @@ function getBookColor($title) {
 .book-cover {
     width: 100%;
     aspect-ratio: 3/4;
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 4px 24px rgba(0,0,0,0.08);
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .book-card:hover .book-cover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.12);
 }
 
 .book-cover img {
@@ -170,33 +159,34 @@ function getBookColor($title) {
 }
 
 .book-meta {
-    margin-top: 1rem;
+    margin-top: 16px;
     text-align: center;
 }
 
 .book-title {
-    font-size: 1.125rem;
+    font-size: 16px;
     font-weight: 600;
-    color: var(--gray-900);
-    margin: 0 0 0.25rem 0;
+    color: #111111;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
 }
 
 .book-author {
-    font-size: 0.875rem;
-    color: var(--gray-600);
+    font-size: 14px;
+    color: #666666;
     margin: 0;
 }
 
 .book-pages {
-    font-size: 0.875rem;
-    color: var(--gray-500);
+    font-size: 14px;
+    color: #999999;
     margin: 0;
 }
 
 /* Add New Book Card Styles */
 .add-book-cover {
-    background: white;
-    border: 2px dashed var(--gray-300);
+    background: #FAFAFA;
+    border: 2px dashed #E5E5E5;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -204,21 +194,22 @@ function getBookColor($title) {
 }
 
 .add-book-card:hover .add-book-cover {
-    border-color: var(--purple);
-    background: var(--gray-50);
+    border-color: #111111;
+    background: #F5F5F5;
+    transform: translateY(-2px);
 }
 
 .add-book-icon {
-    color: var(--gray-400);
+    color: #CCCCCC;
     transition: color 0.2s ease;
 }
 
 .add-book-card:hover .add-book-icon {
-    color: var(--purple);
+    color: #111111;
 }
 
 .add-book-card:hover .book-title {
-    color: var(--purple);
+    color: #111111;
 }
 
 /* Mobile Responsive */

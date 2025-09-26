@@ -100,7 +100,7 @@ class Auth {
     
     public function requireGuest(): void {
         if ($this->check()) {
-            header('Location: /dashboard');
+            header('Location: /books');
             exit;
         }
     }
