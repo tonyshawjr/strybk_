@@ -68,21 +68,22 @@
         .logout-button {
             position: absolute;
             right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
             background: none;
-            border: 1px solid #E5E5E5;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666666;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            color: #111111;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         
         .logout-button:hover {
-            border-color: #111111;
-            color: #111111;
+            background: #F5F5F5;
         }
         
         .logout-form {
@@ -169,7 +170,9 @@
                 <a href="/books" class="logo">strybk</a>
                 <form method="POST" action="/logout" class="logout-form">
                     <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-                    <button type="submit" class="logout-button">Logout</button>
+                    <button type="submit" class="logout-button" title="Logout">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
                 </form>
             </div>
         </header>
