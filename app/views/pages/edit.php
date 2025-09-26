@@ -1221,86 +1221,53 @@ function generateDiffView(oldText, newText) {
 }
 
 function findDifferences(oldText, newText) {
-    // Process line by line to prevent cross-line word merging
-    const oldLines = oldText.split('\n');
-    const newLines = newText.split('\n');
-    
-    let result = [];
-    const maxLines = Math.max(oldLines.length, newLines.length);
-    
-    for (let lineIdx = 0; lineIdx < maxLines; lineIdx++) {
-        const oldLine = oldLines[lineIdx] !== undefined ? oldLines[lineIdx] : '';
-        const newLine = newLines[lineIdx] !== undefined ? newLines[lineIdx] : '';
-        
-        if (oldLine === newLine) {
-            // Lines match exactly
-            result.push(escapeHtml(oldLine));
-        } else {
-            // Process differences within this line only
-            result.push(processLineDiff(oldLine, newLine));
-        }
+    // Simple character-based diff with word boundaries
+    if (oldText === newText) {
+        return escapeHtml(oldText);
     }
     
-    return result.join('<br>');
-}
-
-function processLineDiff(oldLine, newLine) {
-    if (!oldLine && newLine) {
-        return `<span class="diff-added">${escapeHtml(newLine)}</span>`;
-    }
-    if (oldLine && !newLine) {
-        return `<span class="diff-removed">${escapeHtml(oldLine)}</span>`;
+    // Find the first difference
+    let firstDiff = 0;
+    while (firstDiff < oldText.length && firstDiff < newText.length && oldText[firstDiff] === newText[firstDiff]) {
+        firstDiff++;
     }
     
-    // Tokenize just this line
-    const oldWords = oldLine.match(/\S+|\s+/g) || [];
-    const newWords = newLine.match(/\S+|\s+/g) || [];
+    // Find the last difference (from the end)
+    let oldEnd = oldText.length - 1;
+    let newEnd = newText.length - 1;
+    while (oldEnd > firstDiff && newEnd > firstDiff && oldText[oldEnd] === newText[newEnd]) {
+        oldEnd--;
+        newEnd--;
+    }
     
+    // Build the result
     let result = '';
-    let i = 0, j = 0;
     
-    // Simple word-by-word comparison within this line only
-    while (i < oldWords.length || j < newWords.length) {
-        if (i >= oldWords.length) {
-            // Rest is additions
-            result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
-            j++;
-        } else if (j >= newWords.length) {
-            // Rest is deletions
-            result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
-            i++;
-        } else if (oldWords[i] === newWords[j]) {
-            // Words match
-            result += escapeHtml(oldWords[i]);
-            i++;
-            j++;
-        } else {
-            // Words differ - just show both, no lookahead
-            const oldIsSpace = /^\s+$/.test(oldWords[i]);
-            const newIsSpace = /^\s+$/.test(newWords[j]);
-            
-            if (oldIsSpace && newIsSpace) {
-                // Both are spaces
-                result += oldWords[i];
-                i++;
-                j++;
-            } else if (oldIsSpace) {
-                // Old is space, new is word
-                result += oldWords[i];
-                i++;
-            } else if (newIsSpace) {
-                // New is space, old is word
-                result += newWords[j];
-                j++;
-            } else {
-                // Both are words - show removed then added
-                result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
-                result += ' ';
-                result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
-                i++;
-                j++;
-            }
-        }
+    // Add the common beginning
+    if (firstDiff > 0) {
+        result += escapeHtml(oldText.substring(0, firstDiff));
+    }
+    
+    // Add the different middle part
+    const oldMiddle = oldText.substring(firstDiff, oldEnd + 1);
+    const newMiddle = newText.substring(firstDiff, newEnd + 1);
+    
+    if (oldMiddle && !newMiddle) {
+        // Only deletion
+        result += `<span class="diff-removed">${escapeHtml(oldMiddle)}</span>`;
+    } else if (!oldMiddle && newMiddle) {
+        // Only addition
+        result += `<span class="diff-added">${escapeHtml(newMiddle)}</span>`;
+    } else if (oldMiddle && newMiddle) {
+        // Both changed - show old then new
+        result += `<span class="diff-removed">${escapeHtml(oldMiddle)}</span>`;
+        result += ' ';
+        result += `<span class="diff-added">${escapeHtml(newMiddle)}</span>`;
+    }
+    
+    // Add the common ending
+    if (oldEnd < oldText.length - 1) {
+        result += escapeHtml(oldText.substring(oldEnd + 1));
     }
     
     return result;
