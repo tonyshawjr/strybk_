@@ -229,15 +229,15 @@ function getBookColor($title) {
 }
 
 .privacy-toggle.public {
-    background: #E8F5E9;
-    border-color: #4CAF50;
-    color: #2E7D32;
+    background: #F5F5F5;
+    border-color: #111111;
+    color: #111111;
 }
 
 .privacy-toggle.private {
-    background: #FFF3E0;
-    border-color: #FF9800;
-    color: #E65100;
+    background: #111111;
+    border-color: #111111;
+    color: white;
 }
 
 .public-link {
@@ -344,14 +344,14 @@ function getBookColor($title) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #4A90E2;
+    background: #111111;
     border-radius: 50%;
     color: white;
     transition: all 0.2s ease;
 }
 
 .add-page-btn:hover {
-    background: #357ABD;
+    background: #333333;
     transform: scale(1.05);
 }
 
@@ -647,8 +647,8 @@ function copyLink(button) {
     document.execCommand('copy');
     
     // Visual feedback
-    button.style.background = '#4CAF50';
-    button.style.borderColor = '#4CAF50';
+    button.style.background = '#111111';
+    button.style.borderColor = '#111111';
     button.style.color = 'white';
     setTimeout(() => {
         button.style.background = '';

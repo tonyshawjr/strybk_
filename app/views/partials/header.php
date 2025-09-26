@@ -127,15 +127,15 @@
         }
         
         .alert-success {
-            background: #D4EDDA;
-            color: #155724;
-            border: 1px solid #C3E6CB;
+            background: #F5F5F5;
+            color: #111111;
+            border: 1px solid #E5E5E5;
         }
         
         .alert-error {
-            background: #F8D7DA;
-            color: #721C24;
-            border: 1px solid #F5C6CB;
+            background: #111111;
+            color: white;
+            border: 1px solid #111111;
         }
         
         /* Mobile */
