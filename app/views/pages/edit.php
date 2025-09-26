@@ -1319,7 +1319,7 @@ function displayComparison(data) {
             <div id="compare-diff-view" style="display: none;">
                 ${diffHtml}
             </div>
-            <div class="compare-content" id="compare-side-view" style="display: block;">
+            <div id="compare-side-view" class="compare-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                 <div class="version-side">
                     <h4>Version ${data.version1.version_number} <small>(${formatDate(data.version1.created_at)})</small></h4>
                     <div class="version-content">${data.version1.content || '<em>Empty</em>'}</div>
@@ -2096,9 +2096,7 @@ function formatDate(dateString) {
 }
 
 .compare-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    /* Grid layout handled by #compare-side-view */
 }
 
 .version-side {
@@ -2234,7 +2232,7 @@ function formatDate(dateString) {
 }
 
 #compare-side-view {
-    display: grid;
+    display: grid !important;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
 }
