@@ -188,7 +188,17 @@ include __DIR__ . '/../partials/header.php';
     position: sticky;
     top: 0px;
     z-index: 100;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.editor-toolbar::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 20px;
+    right: 20px;
+    height: 4px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.05), transparent);
+    pointer-events: none;
 }
 
 .editor-toolbar-inner {
