@@ -677,7 +677,7 @@ function getBookColor($title) {
     color: #999999;
     font-size: 12px;
     position: absolute;
-    left: -24px;
+    left: -32px;
 }
 
 [data-mode="reorder"] .drag-handle:hover {
@@ -690,6 +690,9 @@ function getBookColor($title) {
 
 [data-mode="reorder"] .page-list-link {
     pointer-events: none;
+}
+
+[data-mode="reorder"] .page-list-item {
     cursor: move;
 }
 
@@ -869,7 +872,7 @@ function initializeSortable() {
             animation: 150,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
-            handle: '.page-card',
+            draggable: '.page-card-link',
             disabled: true, // Start disabled (edit mode is default)
             onEnd: function(evt) {
                 updatePageOrder();
@@ -883,7 +886,7 @@ function initializeSortable() {
             animation: 150,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
-            handle: '.page-list-item',
+            draggable: '.page-list-link',
             filter: '.list-header, .list-section',
             disabled: true, // Start disabled (edit mode is default)
             onEnd: function(evt) {
