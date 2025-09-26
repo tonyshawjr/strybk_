@@ -38,7 +38,9 @@
             <div class="book-card">
                 <div class="book-cover add-book-cover">
                     <div class="add-book-icon">
-                        <i class="fa-solid fa-plus fa-2x"></i>
+                        <div class="icon-circle">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
                     </div>
                 </div>
                 <div class="book-meta">
@@ -198,13 +200,30 @@ function getBookColor($title) {
 }
 
 .add-book-icon {
-    color: #CCCCCC;
-    transition: color 0.2s ease;
-    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.add-book-card:hover .add-book-icon {
-    color: #111111;
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    background: #111111;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.icon-circle i {
+    color: white;
+    font-size: 24px;
+}
+
+.add-book-card:hover .icon-circle {
+    background: #6C4AB6;
+    transform: scale(1.1);
 }
 
 .add-book-card:hover .book-title {
