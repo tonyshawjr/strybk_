@@ -933,7 +933,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 // Version History Modal Functions
-function openVersionHistory() {
+window.openVersionHistory = function() {
     const pageId = <?= $page['id'] ?>;
     
     // Create modal if it doesn't exist
@@ -975,7 +975,7 @@ function createVersionHistoryModal() {
     return modal;
 }
 
-function closeVersionHistory() {
+window.closeVersionHistory = function() {
     const modal = document.getElementById('version-history-modal');
     if (modal) {
         modal.style.display = 'none';
@@ -1099,12 +1099,12 @@ function viewVersion(pageId, versionNumber) {
         });
 }
 
-function backToVersionList() {
+window.backToVersionList = function() {
     document.getElementById('version-viewer').style.display = 'none';
     document.getElementById('version-list').style.display = 'block';
 }
 
-function compareWithCurrent(pageId, versionNumber) {
+window.compareWithCurrent = function(pageId, versionNumber) {
     // Load both versions and display diff
     const modal = document.getElementById('version-history-modal');
     const viewer = document.getElementById('version-viewer');
@@ -1221,37 +1221,71 @@ function generateDiffView(oldText, newText) {
 }
 
 function findDifferences(oldText, newText) {
-    // Simple character-based diff that finds continuous changes
+    // Split by words, keeping spaces
+    const oldWords = oldText.match(/\S+|\s+/g) || [];
+    const newWords = newText.match(/\S+|\s+/g) || [];
+    
     let result = '';
     let i = 0, j = 0;
     
-    // Find common prefix
-    while (i < oldText.length && j < newText.length && oldText[i] === newText[j]) {
-        result += escapeHtml(oldText[i]);
-        i++;
-        j++;
+    // Simple word-by-word comparison
+    while (i < oldWords.length || j < newWords.length) {
+        if (i >= oldWords.length) {
+            // New words added at the end
+            result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+            j++;
+        } else if (j >= newWords.length) {
+            // Old words removed from the end
+            result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+            i++;
+        } else if (oldWords[i] === newWords[j]) {
+            // Words match
+            result += escapeHtml(oldWords[i]);
+            i++;
+            j++;
+        } else {
+            // Words differ - check if it's a simple replacement or insertion/deletion
+            // Look ahead to see if we can find a match
+            let oldFoundAt = -1;
+            let newFoundAt = -1;
+            
+            // Check if old word appears soon in new text
+            for (let k = j + 1; k <= Math.min(j + 3, newWords.length); k++) {
+                if (oldWords[i] === newWords[k]) {
+                    newFoundAt = k;
+                    break;
+                }
+            }
+            
+            // Check if new word appears soon in old text
+            for (let k = i + 1; k <= Math.min(i + 3, oldWords.length); k++) {
+                if (newWords[j] === oldWords[k]) {
+                    oldFoundAt = k;
+                    break;
+                }
+            }
+            
+            if (newFoundAt > -1 && (oldFoundAt === -1 || newFoundAt - j < oldFoundAt - i)) {
+                // Old word was deleted, new words inserted
+                while (j < newFoundAt) {
+                    result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+                    j++;
+                }
+            } else if (oldFoundAt > -1) {
+                // New word was inserted, old words deleted
+                while (i < oldFoundAt) {
+                    result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+                    i++;
+                }
+            } else {
+                // Direct replacement - show old then new
+                result += `<span class="diff-removed">${escapeHtml(oldWords[i])}</span>`;
+                result += `<span class="diff-added">${escapeHtml(newWords[j])}</span>`;
+                i++;
+                j++;
+            }
+        }
     }
-    
-    // Find common suffix
-    let oldEnd = oldText.length - 1;
-    let newEnd = newText.length - 1;
-    let suffix = '';
-    
-    while (oldEnd > i && newEnd > j && oldText[oldEnd] === newText[newEnd]) {
-        suffix = escapeHtml(oldText[oldEnd]) + suffix;
-        oldEnd--;
-        newEnd--;
-    }
-    
-    // Everything in between is the change
-    if (i <= oldEnd) {
-        result += `<span class="diff-removed">${escapeHtml(oldText.substring(i, oldEnd + 1))}</span>`;
-    }
-    if (j <= newEnd) {
-        result += `<span class="diff-added">${escapeHtml(newText.substring(j, newEnd + 1))}</span>`;
-    }
-    
-    result += suffix;
     
     return result;
 }
@@ -1431,7 +1465,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function toggleCompareView(view, button) {
+window.toggleCompareView = function(view, button) {
     // Update active button
     document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -1451,7 +1485,7 @@ function toggleCompareView(view, button) {
     }
 }
 
-function backToVersionList() {
+window.backToVersionList = function() {
     const viewer = document.getElementById('version-viewer');
     const list = document.getElementById('version-list');
     const statsDiv = document.querySelector('.version-stats');
@@ -1466,14 +1500,18 @@ function backToVersionList() {
     if (itemsDiv) itemsDiv.style.display = 'block';
 }
 
-function confirmRestore(pageId, versionNumber) {
+// Make functions global for onclick handlers
+window.confirmRestore = function(pageId, versionNumber) {
+    console.log('confirmRestore called with:', pageId, versionNumber);
     if (confirm(`Are you sure you want to restore Version ${versionNumber}? This will create a new version with the content from Version ${versionNumber}.`)) {
         restoreVersion(pageId, versionNumber);
     }
 }
 
-function restoreVersion(pageId, versionNumber) {
+window.restoreVersion = function(pageId, versionNumber) {
+    console.log('restoreVersion called with:', pageId, versionNumber);
     const csrfToken = document.querySelector('input[name="_token"]').value;
+    console.log('CSRF Token:', csrfToken);
     
     // Show loading state on restore button
     const restoreButtons = document.querySelectorAll('.btn-version-restore');
@@ -1998,8 +2036,8 @@ function escapeHtml(text) {
 }
 
 .diff-removed {
-    background: #ffecec;
-    color: #c41e3a;
+    background: #f5f5f5;
+    color: #666;
     text-decoration: line-through;
     padding: 2px 4px;
     border-radius: 3px;
@@ -2007,8 +2045,8 @@ function escapeHtml(text) {
 }
 
 .diff-added {
-    background: #e6ffec;
-    color: #22863a;
+    background: #333;
+    color: #fff;
     padding: 2px 4px;
     border-radius: 3px;
     margin: 0 1px;

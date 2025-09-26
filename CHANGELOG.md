@@ -2,6 +2,16 @@
 
 All notable changes to this project are tracked here.
 
+## [0.5.1] - 2025-09-26
+### Fixed
+- Version history restore functionality now working correctly
+- Restore button click handlers properly attached with global scope
+- Updated diff view colors to black/white/gray scheme:
+  - Removed text: light gray background with dark gray text
+  - Added text: black background with white text
+- Word-level diff algorithm showing only actual changes, not entire blocks
+- Added debugging for restore operations
+
 ## [0.5.0] - 2025-09-26
 ### Added
 - Complete design system and polish (Phase 1 Milestone 5)
