@@ -360,9 +360,9 @@
         /* Navigation */
         .page-navigation {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            padding: 2rem;
+            padding: 3rem 2rem;
             margin-top: 4rem;
             border-top: 1px solid var(--gray-200);
         }
@@ -651,18 +651,6 @@
                 
                 <!-- Page Navigation -->
                 <nav class="page-navigation">
-                    <?php if ($prevPage): ?>
-                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($prevPage['slug']) ?>" class="nav-button">
-                            <i class="fa-solid fa-chevron-left"></i>
-                            Previous
-                        </a>
-                    <?php else: ?>
-                        <span class="nav-button disabled">
-                            <i class="fa-solid fa-chevron-left"></i>
-                            Previous
-                        </span>
-                    <?php endif; ?>
-                    
                     <?php if ($nextPage): ?>
                         <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button next-with-title">
                             <span class="next-label">
@@ -671,11 +659,6 @@
                             </span>
                             <span class="next-arrow">→</span>
                         </a>
-                    <?php else: ?>
-                        <span class="nav-button disabled">
-                            Next
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </span>
                     <?php endif; ?>
                 </nav>
             </article>
@@ -705,16 +688,10 @@
                 return;
             }
             
-            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                // Previous page
-                const prevLink = document.querySelector('.page-navigation a:first-child');
-                if (prevLink && !prevLink.classList.contains('disabled')) {
-                    prevLink.click();
-                }
-            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
                 // Next page
-                const nextLink = document.querySelector('.page-navigation a:last-child');
-                if (nextLink && !nextLink.classList.contains('disabled')) {
+                const nextLink = document.querySelector('.nav-button.next-with-title');
+                if (nextLink) {
                     nextLink.click();
                 }
             } else if (e.key === 't' || e.key === 'T') {
@@ -741,7 +718,6 @@
                     <h3>Keyboard Shortcuts</h3>
                     <button class="close-help" onclick="this.parentElement.parentElement.remove()">×</button>
                     <dl>
-                        <dt>← / A</dt><dd>Previous page</dd>
                         <dt>→ / D</dt><dd>Next page</dd>
                         <dt>T</dt><dd>Toggle table of contents</dd>
                         <dt>ESC</dt><dd>Hide table of contents</dd>
