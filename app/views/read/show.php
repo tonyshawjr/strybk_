@@ -391,17 +391,17 @@
         
         /* Next button with title */
         .nav-button.next-with-title {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 1rem;
-            padding: 1rem 1.5rem;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
             background: white;
             border: 2px solid var(--primary);
             border-radius: 50px;
             color: var(--primary);
             font-weight: 500;
-            max-width: 300px;
             position: relative;
+            white-space: nowrap;
         }
         
         .nav-button.next-with-title:hover {
@@ -410,33 +410,30 @@
         }
         
         .next-label {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.25rem;
-            text-align: left;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .next-prefix {
-            font-size: 0.75rem;
-            opacity: 0.8;
+            font-size: 0.875rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
+            font-weight: 600;
         }
         
         .next-title {
             font-size: 0.9375rem;
-            line-height: 1.3;
+            font-weight: 400;
+            max-width: 300px;
             overflow: hidden;
             text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
+            white-space: nowrap;
         }
         
         .next-arrow {
-            font-size: 1.25rem;
-            margin-left: auto;
+            font-size: 1.125rem;
+            line-height: 1;
         }
         
         /* Mobile responsive */
@@ -463,11 +460,12 @@
             }
             
             .nav-button.next-with-title {
-                max-width: 200px;
+                padding: 0.75rem 1.25rem;
             }
             
             .next-title {
                 font-size: 0.875rem;
+                max-width: 200px;
             }
             
             .page-content {
@@ -654,7 +652,7 @@
                     <?php if ($nextPage): ?>
                         <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button next-with-title">
                             <span class="next-label">
-                                <span class="next-prefix">Next:</span>
+                                <span class="next-prefix">NEXT:</span>
                                 <span class="next-title"><?= htmlspecialchars($nextPage['title']) ?></span>
                             </span>
                             <span class="next-arrow">→</span>
