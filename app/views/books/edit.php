@@ -28,23 +28,13 @@ include __DIR__ . '/../partials/header.php';
                 
                 <!-- Controls Section -->
                 <div class="book-controls">
-                    <!-- Privacy Toggle Switch -->
-                    <div class="privacy-switch-container">
-                        <input type="checkbox" 
-                               id="privacy-toggle" 
-                               class="privacy-switch-input" 
-                               <?= $book['is_public'] ? 'checked' : '' ?>
-                               data-book-id="<?= $book['id'] ?>">
-                        <label for="privacy-toggle" class="privacy-switch-label">
-                            <span class="switch-icon private-icon">
-                                <i class="fa-solid fa-lock"></i>
-                            </span>
-                            <span class="switch-icon public-icon">
-                                <i class="fa-solid fa-globe"></i>
-                            </span>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
+                    <!-- Privacy Toggle -->
+                    <button class="visibility-toggle <?= $book['is_public'] ? 'public' : 'private' ?>" 
+                            data-book-id="<?= $book['id'] ?>"
+                            data-current="<?= $book['is_public'] ? 'public' : 'private' ?>"
+                            onclick="toggleVisibility(this)">
+                        <i class="fa-solid <?= $book['is_public'] ? 'fa-globe' : 'fa-lock' ?>"></i>
+                    </button>
                     
                     <!-- View Book Button -->
                     <?php if ($book['is_public']): ?>
@@ -56,24 +46,24 @@ include __DIR__ . '/../partials/header.php';
                 
                 <!-- Public Link -->
                 <?php if ($book['is_public']): ?>
-                    <div class="public-link-container">
+                    <div class="public-link-section">
                         <span class="public-link-text"><?= htmlspecialchars($_SERVER['HTTP_HOST'] . '/read/' . $book['slug']) ?></span>
-                        <button class="copy-btn" onclick="copyLink(this)" title="Copy link">
+                        <button class="copy-icon-btn" onclick="copyLink(this)" title="Copy link">
                             <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
                 <?php endif; ?>
                 
                 <!-- Book Actions -->
-                <div class="book-actions">
-                    <button class="action-btn" onclick="editBookDetails()" title="Edit details">
+                <div class="book-actions-minimal">
+                    <button class="action-icon" onclick="editBookDetails()" title="Edit details">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </button>
-                    <button class="action-btn" onclick="shareBook()" title="Share">
-                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                    </button>
-                    <button class="action-btn" onclick="exportBook()" title="Export">
+                    <button class="action-icon" onclick="exportBook()" title="Export">
                         <i class="fa-solid fa-file-export"></i>
+                    </button>
+                    <button class="action-icon" onclick="shareBook()" title="Share">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
                     </button>
                 </div>
             </div>
@@ -241,113 +231,125 @@ function getBookColor($title) {
     margin: 0 0 16px 0;
 }
 
-/* View Book Link */
-.view-book-link {
-    display: inline-block;
-    padding: 10px 20px;
-    background: #111111;
-    color: white;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 20px;
-    transition: all 0.2s ease;
+/*/* Book Controls */
+.book-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-.view-book-link i {
-    margin-right: 6px;
-}
-
-.view-book-link:hover {
-    background: #333333;
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* Privacy Toggle */
-.privacy-toggle-container {
-    margin-bottom: 24px;
-}
-
-.privacy-toggle {
+/* Visibility Toggle Button */
+.visibility-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border: 1px solid #E5E5E5;
-    border-radius: 20px;
-    background: white;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-size: 18px;
 }
 
-.privacy-toggle.public {
+.visibility-toggle.private {
+    color: #666666;
+}
+
+.visibility-toggle.private:hover {
     background: #F5F5F5;
-    border-color: #111111;
     color: #111111;
 }
 
-.privacy-toggle.private {
-    background: #111111;
-    border-color: #111111;
-    color: white;
+.visibility-toggle.public {
+    color: #111111;
 }
 
-.public-link {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.link-input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #E5E5E5;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #666666;
-    background: #FAFAFA;
-}
-
-.copy-link {
-    padding: 8px;
-    border: 1px solid #E5E5E5;
-    border-radius: 6px;
-    background: white;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.copy-link:hover {
+.visibility-toggle.public:hover {
     background: #F5F5F5;
 }
 
-/* Book Actions */
-.book-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-icon {
-    width: 32px;
-    height: 32px;
-    display: flex;
+/* View Book Button */
+.view-book-btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #E5E5E5;
-    border-radius: 6px;
-    background: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: #666666;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.view-book-btn:hover {
+    background: #F5F5F5;
+    color: #111111;
+}
+
+/* Public Link Section */
+.public-link-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.public-link-text {
+    font-size: 13px;
+    color: #666666;
+    font-family: 'Inter', sans-serif;
+}
+
+.copy-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    color: #666666;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.btn-icon:hover {
+.copy-icon-btn:hover {
     background: #F5F5F5;
-    border-color: #111111;
+    color: #111111;
+}
+
+.copy-icon-btn.copied {
+    color: #4CAF50;
+}
+
+/* Book Actions Minimal */
+.book-actions-minimal {
+    display: flex;
+    gap: 8px;
+}
+
+.action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: #666666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.action-icon:hover {
+    background: #F5F5F5;
+    color: #111111;
 }
 
 /* Pages Section */
@@ -814,12 +816,10 @@ function updatePageOrder() {
     });
 }
 
-// Privacy toggle
-document.querySelector('.privacy-toggle')?.addEventListener('click', function() {
-    const bookId = this.dataset.bookId;
-    const current = this.dataset.current;
-    const newStatus = current === 'public' ? 'private' : 'public';
-    const button = this;
+// Toggle visibility function
+function toggleVisibility(button) {
+    const bookId = button.dataset.bookId;
+    const current = button.dataset.current;
     
     // Disable button during update
     button.disabled = true;
@@ -836,57 +836,51 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
     .then(data => {
         if (data.success) {
             // Update UI only after successful server update
-            const actualStatus = data.is_public ? 'public' : 'private';
+            const newStatus = data.is_public ? 'public' : 'private';
             
-            // Update button classes
-            if (actualStatus === 'public') {
-                button.classList.add('public');
+            // Update button classes and icon
+            if (newStatus === 'public') {
                 button.classList.remove('private');
+                button.classList.add('public');
+                button.innerHTML = '<i class="fa-solid fa-globe"></i>';
             } else {
-                button.classList.add('private');
                 button.classList.remove('public');
+                button.classList.add('private');
+                button.innerHTML = '<i class="fa-solid fa-lock"></i>';
             }
             
-            button.dataset.current = actualStatus;
-            button.querySelector('.toggle-text').textContent = actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1);
+            button.dataset.current = newStatus;
             
-            // Update icon
-            if (actualStatus === 'public') {
-                button.querySelector('.toggle-icon').innerHTML = `<i class="fa-regular fa-eye"></i>`;
-                
-                // Show View Book link
-                const viewLink = document.querySelector('.view-book-link');
-                if (!viewLink) {
-                    const bookMeta = document.querySelector('.book-meta-section');
-                    const linkHtml = `
-                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-link">
-                            <i class="fa-regular fa-eye"></i>
-                            View Book
-                        </a>
-                    `;
-                    // Insert after author
-                    const author = bookMeta.querySelector('.book-author-display');
-                    author.insertAdjacentHTML('afterend', linkHtml);
+            // Handle view button and public link visibility
+            const viewBtn = document.querySelector('.view-book-btn');
+            const publicLink = document.querySelector('.public-link-section');
+            
+            if (newStatus === 'public') {
+                // Show view button if not exists
+                if (!viewBtn) {
+                    const controlsDiv = document.querySelector('.book-controls');
+                    const viewHtml = `<a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-btn" title="View Book">
+                        <i class="fa-regular fa-eye"></i>
+                    </a>`;
+                    button.insertAdjacentHTML('afterend', viewHtml);
                 }
                 
-                // Show public link
-                if (!document.querySelector('.public-link')) {
+                // Show public link if not exists
+                if (!publicLink) {
+                    const controlsDiv = document.querySelector('.book-controls');
                     const linkHtml = `
-                        <div class="public-link">
-                            <input type="text" readonly value="${window.location.host}/read/<?= htmlspecialchars($book['slug']) ?>" class="link-input">
-                            <button class="copy-link" onclick="copyLink(this)">
+                        <div class="public-link-section">
+                            <span class="public-link-text">${window.location.host}/read/<?= htmlspecialchars($book['slug']) ?></span>
+                            <button class="copy-icon-btn" onclick="copyLink(this)" title="Copy link">
                                 <i class="fa-regular fa-copy"></i>
                             </button>
-                        </div>
-                    `;
-                    button.parentElement.insertAdjacentHTML('beforeend', linkHtml);
+                        </div>`;
+                    controlsDiv.insertAdjacentHTML('afterend', linkHtml);
                 }
             } else {
-                button.querySelector('.toggle-icon').innerHTML = `<i class="fa-solid fa-lock"></i>`;
-                // Hide View Book link
-                document.querySelector('.view-book-link')?.remove();
-                // Hide public link
-                document.querySelector('.public-link')?.remove();
+                // Hide view button and public link
+                viewBtn?.remove();
+                publicLink?.remove();
             }
         } else {
             console.error('Failed to update visibility');
@@ -902,23 +896,29 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
         button.disabled = false;
         button.style.opacity = '';
     });
-});
+}
 
 // Copy link function
 function copyLink(button) {
-    const input = button.previousElementSibling;
-    input.select();
+    const linkText = button.previousElementSibling.textContent;
+    
+    // Create temporary input to copy text
+    const tempInput = document.createElement('input');
+    tempInput.value = 'https://' + linkText;
+    document.body.appendChild(tempInput);
+    tempInput.select();
     document.execCommand('copy');
+    document.body.removeChild(tempInput);
     
     // Visual feedback
-    button.style.background = '#111111';
-    button.style.borderColor = '#111111';
-    button.style.color = 'white';
+    button.classList.add('copied');
+    const originalIcon = button.innerHTML;
+    button.innerHTML = '<i class="fa-solid fa-check"></i>';
+    
     setTimeout(() => {
-        button.style.background = '';
-        button.style.borderColor = '';
-        button.style.color = '';
-    }, 1000);
+        button.classList.remove('copied');
+        button.innerHTML = originalIcon;
+    }, 2000);
 }
 
 // Placeholder functions
