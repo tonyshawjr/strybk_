@@ -87,6 +87,7 @@ class ReadController {
                 $page['display_kind'] = 'divider';
             }
         }
+        unset($page); // Break the reference to avoid issues
         
         // Update current page with display kind
         $currentPage['display_kind'] = $currentPage['kind'] === 'text' && empty(trim($currentPage['content'])) 
