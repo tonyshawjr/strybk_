@@ -1,5 +1,6 @@
 <?php 
 $showBackButton = true;
+$backButtonUrl = '/books/' . htmlspecialchars($book['slug']) . '/edit';
 include __DIR__ . '/../partials/header.php'; 
 ?>
 

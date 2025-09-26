@@ -162,7 +162,7 @@
         <header class="header">
             <div class="header-content">
                 <?php if (isset($showBackButton) && $showBackButton): ?>
-                    <a href="/books" class="back-button">
+                    <a href="<?= isset($backButtonUrl) ? htmlspecialchars($backButtonUrl) : '/books' ?>" class="back-button">
                         <i class="fa-solid fa-arrow-left"></i>
                     </a>
                 <?php endif; ?>
