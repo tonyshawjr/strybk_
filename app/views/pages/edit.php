@@ -81,6 +81,7 @@ include __DIR__ . '/../partials/header.php';
                 <button class="toolbar-btn" data-command="check" title="Save">
                     <i class="fa-solid fa-check"></i>
                 </button>
+                <span id="save-indicator" style="display: none; color: #10b981; font-size: 14px; margin-left: 8px;">Saved</span>
             </div>
         </div>
         
@@ -112,8 +113,17 @@ include __DIR__ . '/../partials/header.php';
                 
                 <!-- Editor Footer -->
                 <div class="editor-footer">
-                    <div class="word-count">
-                        <span id="word-count">0</span> words
+                    <div class="footer-left">
+                        <div class="word-count">
+                            <span id="word-count">0</span> words
+                        </div>
+                        <div class="last-saved" id="last-saved" style="font-size: 12px; color: #999999; margin-top: 4px;">
+                            <?php if (isset($page['updated_at'])): ?>
+                                Last saved: <span id="last-saved-time"><?= date('g:i A', strtotime($page['updated_at'])) ?></span>
+                            <?php else: ?>
+                                <span id="last-saved-time">Not saved yet</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="editor-actions">
                         <button type="button" class="btn-secondary" onclick="window.location.href='/books/<?= htmlspecialchars($book['slug']) ?>/edit'">Cancel</button>
@@ -438,6 +448,11 @@ include __DIR__ . '/../partials/header.php';
     border-top: 1px solid #F5F5F5;
 }
 
+.footer-left {
+    display: flex;
+    flex-direction: column;
+}
+
 .word-count {
     font-size: 14px;
     color: #999999;
@@ -611,6 +626,30 @@ document.getElementById('page-form').addEventListener('submit', function(e) {
             toolbarSave.style.color = '#10b981';
         }
         
+        // Show "Saved" indicator next to check mark
+        const saveIndicator = document.getElementById('save-indicator');
+        if (saveIndicator) {
+            saveIndicator.style.display = 'inline';
+        }
+        
+        // Update last saved time
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+        });
+        const lastSavedElement = document.getElementById('last-saved-time');
+        if (lastSavedElement) {
+            lastSavedElement.textContent = timeString;
+            
+            // Update the parent text if needed
+            const lastSavedDiv = document.getElementById('last-saved');
+            if (lastSavedDiv && !lastSavedDiv.innerHTML.includes('Last saved:')) {
+                lastSavedDiv.innerHTML = 'Last saved: <span id="last-saved-time">' + timeString + '</span>';
+            }
+        }
+        
         // Clear draft since we saved
         localStorage.removeItem('draft-page-' + <?= $page['id'] ?>);
         
@@ -622,6 +661,13 @@ document.getElementById('page-form').addEventListener('submit', function(e) {
             
             if (toolbarSave) {
                 toolbarSave.style.color = '';
+            }
+            
+            // Hide save indicator after 3 seconds
+            if (saveIndicator) {
+                setTimeout(() => {
+                    saveIndicator.style.display = 'none';
+                }, 1000);
             }
         }, 2000);
     })
@@ -710,10 +756,8 @@ document.querySelectorAll('.toolbar-btn').forEach(btn => {
                 }
                 break;
             case 'check':
-                // Sync content to textarea first, then submit
-                const textarea = document.getElementById('content-textarea');
-                textarea.value = editor.innerHTML;
-                document.getElementById('page-form').submit();
+                // Trigger the form submit which will be caught by our AJAX handler
+                document.getElementById('page-form').requestSubmit();
                 break;
             case 'history':
                 alert('Version history coming soon');
@@ -843,7 +887,7 @@ document.addEventListener('keydown', function(e) {
     // Cmd/Ctrl + S to save
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        document.getElementById('page-form').submit();
+        document.getElementById('page-form').requestSubmit();
     }
     
     // Cmd/Ctrl + B for bold
