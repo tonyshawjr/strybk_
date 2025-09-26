@@ -2,6 +2,33 @@
 
 All notable changes to this project are tracked here.
 
+## [0.4.0] - 2025-09-26
+### Added
+- Complete page reordering and navigation system (Phase 1 Milestone 4)
+- SortableJS integration for drag-and-drop page reordering
+- Visual reordering interface with drag handles in book edit
+- AJAX-based page order updates with real-time feedback
+- Comprehensive breadcrumb navigation across all pages:
+  - pages/create.php - Dashboard > Books > Book > New Page
+  - pages/edit.php - Dashboard > Books > Book > Page Title
+  - read/show.php - Library > Book > Current Page
+- Enhanced keyboard shortcuts in reader:
+  - A/D keys for previous/next navigation (in addition to arrow keys)
+  - T to toggle table of contents
+  - ESC to hide table of contents
+  - H/? to show keyboard shortcuts help
+- Keyboard shortcuts help modal with styled overlay
+- Improved page reordering with position/order_index mapping
+
+### Changed
+- PageController reorder method now properly handles type conversion
+- Reader interface keyboard navigation enhanced with multiple key options
+- Added CSS styles for keyboard help modal
+
+### Fixed
+- Fixed database column mapping for page ordering (position vs order_index)
+- Added missing header content-type for JSON responses in reorder endpoint
+
 ## [0.3.0] - 2025-09-25
 ### Added
 - Complete page management system (Phase 1 Milestone 3)

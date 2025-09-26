@@ -1,6 +1,16 @@
 <?php include __DIR__ . '/../partials/header.php'; ?>
 
 <div class="container">
+    <nav class="breadcrumb">
+        <a href="/dashboard" class="breadcrumb-item">Dashboard</a>
+        <span class="breadcrumb-separator">›</span>
+        <a href="/books" class="breadcrumb-item">Books</a>
+        <span class="breadcrumb-separator">›</span>
+        <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="breadcrumb-item"><?= htmlspecialchars($book['title']) ?></a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-current">New Page</span>
+    </nav>
+    
     <div class="page-header">
         <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="btn-back">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -62,6 +72,34 @@
 .page-form {
     max-width: 900px;
     margin: 2rem auto;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item {
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--purple);
+}
+
+.breadcrumb-separator {
+    margin: 0 0.5rem;
+    color: var(--gray-400);
+}
+
+.breadcrumb-current {
+    color: var(--gray-900);
+    font-weight: 500;
 }
 
 .page-header {

@@ -135,8 +135,40 @@
             top: 0;
             z-index: 10;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .breadcrumb {
+            display: flex;
             align-items: center;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+        
+        .breadcrumb-item {
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-item:hover {
+            color: var(--purple);
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 0.5rem;
+            color: var(--gray-400);
+        }
+        
+        .breadcrumb-current {
+            color: var(--gray-900);
+            font-weight: 500;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .reader-controls {
@@ -371,6 +403,68 @@
                 font-size: 1rem;
             }
         }
+        
+        /* Keyboard shortcuts help modal */
+        .keyboard-help-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .keyboard-help-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .keyboard-help-content h3 {
+            margin: 0 0 1.5rem 0;
+            color: var(--gray-900);
+        }
+        
+        .keyboard-help-content dl {
+            margin: 0;
+        }
+        
+        .keyboard-help-content dt {
+            display: inline-block;
+            width: 80px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+        
+        .keyboard-help-content dd {
+            display: inline-block;
+            margin: 0 0 0.5rem 0;
+            color: var(--gray-600);
+        }
+        
+        .close-help {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+        }
+        
+        .close-help:hover {
+            color: var(--gray-600);
+        }
     </style>
 </head>
 <body>
@@ -403,6 +497,13 @@
         <!-- Main Content -->
         <main class="reader-main" id="reader-main">
             <header class="reader-header">
+                <nav class="breadcrumb">
+                    <a href="/books" class="breadcrumb-item">Library</a>
+                    <span class="breadcrumb-separator">›</span>
+                    <a href="/books/<?= htmlspecialchars($book['slug']) ?>" class="breadcrumb-item"><?= htmlspecialchars($book['title']) ?></a>
+                    <span class="breadcrumb-separator">›</span>
+                    <span class="breadcrumb-current"><?= htmlspecialchars($currentPage['title']) ?></span>
+                </nav>
                 <div class="reader-controls">
                     <button class="toggle-toc" id="toggle-toc" title="Toggle Table of Contents">
                         <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
@@ -512,20 +613,75 @@
             }
         });
         
-        // Keyboard navigation
+        // Enhanced Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') {
+            // Don't trigger shortcuts when typing in inputs
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                // Previous page
                 const prevLink = document.querySelector('.page-navigation a:first-child');
                 if (prevLink && !prevLink.classList.contains('disabled')) {
                     prevLink.click();
                 }
-            } else if (e.key === 'ArrowRight') {
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                // Next page
                 const nextLink = document.querySelector('.page-navigation a:last-child');
                 if (nextLink && !nextLink.classList.contains('disabled')) {
                     nextLink.click();
                 }
+            } else if (e.key === 't' || e.key === 'T') {
+                // Toggle TOC
+                toggleBtn.click();
+            } else if (e.key === 'Escape') {
+                // Hide TOC
+                if (!tocSidebar.classList.contains('hidden')) {
+                    tocSidebar.classList.add('hidden');
+                    readerMain.classList.add('full-width');
+                }
+            } else if (e.key === 'h' || e.key === 'H' || e.key === '?') {
+                // Show help (keyboard shortcuts)
+                showKeyboardHelp();
             }
         });
+        
+        // Show keyboard shortcuts help
+        function showKeyboardHelp() {
+            const helpModal = document.createElement('div');
+            helpModal.className = 'keyboard-help-modal';
+            helpModal.innerHTML = `
+                <div class="keyboard-help-content">
+                    <h3>Keyboard Shortcuts</h3>
+                    <button class="close-help" onclick="this.parentElement.parentElement.remove()">×</button>
+                    <dl>
+                        <dt>← / A</dt><dd>Previous page</dd>
+                        <dt>→ / D</dt><dd>Next page</dd>
+                        <dt>T</dt><dd>Toggle table of contents</dd>
+                        <dt>ESC</dt><dd>Hide table of contents</dd>
+                        <dt>? / H</dt><dd>Show this help</dd>
+                    </dl>
+                </div>
+            `;
+            document.body.appendChild(helpModal);
+            
+            // Close on click outside
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    helpModal.remove();
+                }
+            });
+            
+            // Close on Escape
+            const closeOnEsc = (e) => {
+                if (e.key === 'Escape') {
+                    helpModal.remove();
+                    document.removeEventListener('keydown', closeOnEsc);
+                }
+            };
+            document.addEventListener('keydown', closeOnEsc);
+        }
     </script>
 </body>
 </html>

@@ -272,7 +272,8 @@ class PageController {
     /**
      * Reorder pages
      */
-    public function reorder(int $bookId): void {
+    public function reorder($bookId): void {
+        $bookId = (int)$bookId;
         $this->auth->requireAuth();
         $this->auth->checkCsrf();
         
@@ -300,9 +301,11 @@ class PageController {
                 $this->pageModel->updatePosition((int)$pageId, $position + 1);
             }
             
+            header('Content-Type: application/json');
             http_response_code(200);
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
+            header('Content-Type: application/json');
             http_response_code(500);
             echo json_encode(['error' => 'Failed to reorder pages']);
         }

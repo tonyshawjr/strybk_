@@ -16,11 +16,13 @@
 - [x] Write Playwright tests for installer
 - [x] Initial git commit and push to main
 
-## Next (Phase 1 - Milestone 4: Reorder & Navigation)
-- [ ] Implement SortableJS for drag-drop page reordering
-- [ ] Add visual reordering interface in book edit
-- [ ] Create breadcrumb component for navigation
-- [ ] Add keyboard shortcuts for reader navigation
+## Next (Phase 1 - Milestone 5: Polish)
+
+- [ ] Design minimal CSS system
+- [ ] Implement typography styles
+- [ ] Make responsive layouts
+- [ ] Test on Hostinger Cloud
+
 ## Backlog (Phase 1 - Remaining Milestones)
 
 ### Milestone 5: Polish
@@ -59,8 +61,16 @@
   - Added prev/next navigation with keyboard support
   - Implemented reading progress indicator
 
+- [2025-09-26] Phase 1 Milestone 4: Reorder & Navigation - COMPLETE
+  - Implemented SortableJS for drag-drop page reordering
+  - Added visual reordering interface with drag handles
+  - Created AJAX endpoint for saving page order
+  - Built comprehensive breadcrumb navigation
+  - Enhanced keyboard shortcuts (A/D, T, ESC, H/?)
+  - Added keyboard shortcuts help modal
+
 ## Links
 
 - GitHub: <https://github.com/tonyshawjr/strybk_.git>
-- Live Server: TBD (will be provided)
+- Live Server: <https://strybk.illbedev.com>
 - Design Inspiration: <https://once.com/writebook>

@@ -287,6 +287,118 @@
         position: static;
     }
 }
+
+/* Sortable styles */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f0f0f0;
+}
+
+.sortable-drag {
+    opacity: 0.9;
+    background: white;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.drag-handle {
+    cursor: move;
+}
+
+.drag-handle:hover {
+    color: var(--purple);
+}
+
+.reorder-status {
+    padding: 0.5rem 1rem;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 6px;
+    margin-top: 1rem;
+    display: none;
+}
+
+.reorder-status.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.reorder-status.show {
+    display: block;
+}
 </style>
+
+<!-- SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pagesList = document.getElementById('pages-list');
+    
+    if (pagesList) {
+        // Initialize SortableJS
+        const sortable = Sortable.create(pagesList, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                // Get the new order of page IDs
+                const pageItems = pagesList.querySelectorAll('.page-item');
+                const pageIds = Array.from(pageItems).map(item => item.dataset.id);
+                
+                // Send AJAX request to update order
+                updatePageOrder(pageIds);
+            }
+        });
+    }
+    
+    function updatePageOrder(pageIds) {
+        const formData = new FormData();
+        formData.append('_token', '<?= $auth->csrfToken() ?>');
+        pageIds.forEach((id, index) => {
+            formData.append('page_ids[]', id);
+        });
+        
+        fetch('/books/<?= $book['id'] ?>/pages/reorder', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showStatus('Pages reordered successfully!', 'success');
+            } else {
+                showStatus('Error reordering pages. Please try again.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('Error reordering pages. Please try again.', 'error');
+        });
+    }
+    
+    function showStatus(message, type) {
+        // Check if status element exists, if not create it
+        let statusEl = document.querySelector('.reorder-status');
+        if (!statusEl) {
+            statusEl = document.createElement('div');
+            statusEl.className = 'reorder-status';
+            const pagesSection = document.querySelector('.pages-section');
+            pagesSection.appendChild(statusEl);
+        }
+        
+        statusEl.textContent = message;
+        statusEl.className = 'reorder-status show';
+        if (type === 'error') {
+            statusEl.classList.add('error');
+        }
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            statusEl.classList.remove('show');
+        }, 3000);
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>
