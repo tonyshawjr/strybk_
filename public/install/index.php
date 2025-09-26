@@ -9,14 +9,14 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Check installation status
-$configFile = __DIR__ . '/../app/config.php';
+$configFile = __DIR__ . '/../../app/config.php';
 $isInstalled = file_exists($configFile);
 $mode = $isInstalled ? 'update' : 'install';
 
 // If installed, load config for updates
 if ($isInstalled) {
     require_once $configFile;
-    require_once __DIR__ . '/../app/Database.php';
+    require_once __DIR__ . '/../../app/Database.php';
 }
 
 $step = $_GET['step'] ?? 1;
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$name, $email, $passwordHash]);
                 
                 // Create config file
-                $configTemplate = file_get_contents(__DIR__ . '/../app/config.example.php');
+                $configTemplate = file_get_contents(__DIR__ . '/../../app/config.example.php');
                 $configContent = str_replace(
                     [
                         "'host' => 'localhost'",
@@ -447,7 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo '<li>' . htmlspecialchars($message) . '</li>';
                     }
                     echo '</ul>';
-                    echo '<br><a href="/">Return to Strybk →</a>';
+                    echo '<br><a href="/books">Return to Strybk →</a>';
                     echo '</div>';
                 } else {
                     echo '<div class="error">';
@@ -469,7 +469,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="success">
                 <h2>✨ Installation Complete!</h2>
                 <p>Strybk has been successfully installed.</p>
-                <a href="/">Start Writing →</a>
+                <a href="/login">Start Writing →</a>
             </div>
         <?php elseif ($step == 1): ?>
             <form method="POST">
