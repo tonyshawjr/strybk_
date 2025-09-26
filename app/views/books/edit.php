@@ -636,9 +636,13 @@ function getBookColor($title) {
 }
 
 .page-list-link {
-    text-decoration: none;
+    text-decoration: none !important;
     color: inherit;
     display: block;
+}
+
+.page-list-link:hover {
+    text-decoration: none !important;
 }
 
 .page-list-item {
@@ -696,6 +700,10 @@ function getBookColor($title) {
 .page-list-item:hover .page-title {
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+.page-list-item:hover .page-word-count {
+    text-decoration: none;
 }
 
 .page-list-item.active {
