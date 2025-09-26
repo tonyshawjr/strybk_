@@ -1,17 +1,22 @@
 <?php
 /**
- * Strybk_ Installation Wizard
- * Sets up database and creates first user
+ * Strybk_ Installation & Update System
+ * Handles both fresh installations and database updates
  */
 
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Check if already installed
+// Check installation status
 $configFile = __DIR__ . '/../app/config.php';
-if (file_exists($configFile)) {
-    die('Strybk is already installed. Please delete app/config.php to reinstall.');
+$isInstalled = file_exists($configFile);
+$mode = $isInstalled ? 'update' : 'install';
+
+// If installed, load config for updates
+if ($isInstalled) {
+    require_once $configFile;
+    require_once __DIR__ . '/../app/Database.php';
 }
 
 $step = $_GET['step'] ?? 1;
@@ -82,9 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
                 );
                 
-                // Read and execute schema
-                $schema = file_get_contents(__DIR__ . '/schema.sql');
-                $statements = array_filter(array_map('trim', explode(';', $schema)));
+                // Read and execute complete schema
+                $schema = file_get_contents(__DIR__ . '/schema-complete.sql');
+                $statements = splitSqlStatements($schema);
                 
                 foreach ($statements as $statement) {
                     if (!empty($statement)) {
@@ -334,7 +339,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #666;
             margin-top: 4px;
         }
+        
+        .update-notice {
+            background: #F0F8FF;
+            border: 2px solid var(--purple);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .update-notice h2 {
+            color: var(--purple);
+            margin-bottom: 12px;
+        }
+        
+        .update-notice ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+        
+        .update-notice li {
+            margin: 8px 0;
+            color: #333;
+        }
     </style>
+    
+    <?php
+    // Helper function to split SQL statements
+    function splitSqlStatements($sql) {
+        $sql = preg_replace('/--.*$/m', '', $sql);
+        $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);
+        
+        $statements = [];
+        $current = '';
+        $inString = false;
+        $stringChar = '';
+        
+        for ($i = 0; $i < strlen($sql); $i++) {
+            $char = $sql[$i];
+            $current .= $char;
+            
+            if (!$inString && ($char === '"' || $char === "'")) {
+                $inString = true;
+                $stringChar = $char;
+            } elseif ($inString && $char === $stringChar && $sql[$i-1] !== '\\') {
+                $inString = false;
+            } elseif (!$inString && $char === ';') {
+                $statements[] = trim($current);
+                $current = '';
+            }
+        }
+        
+        if (!empty(trim($current))) {
+            $statements[] = trim($current);
+        }
+        
+        return $statements;
+    }
+    ?>
 </head>
 <body>
     <div class="container">
@@ -356,7 +418,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         
-        <?php if (!empty($errors)): ?>
+        <?php if ($mode === 'update'): ?>
+            <?php if (!isset($_GET['run'])): ?>
+                <div class="update-notice">
+                    <h2>Database Update Available</h2>
+                    <p>Your Strybk installation needs a database update to enable new features.</p>
+                    <p><strong>New features include:</strong></p>
+                    <ul>
+                        <li>✓ Version history for all pages</li>
+                        <li>✓ Restore previous versions</li>
+                        <li>✓ Track all changes with authors</li>
+                    </ul>
+                    <form method="GET">
+                        <input type="hidden" name="run" value="update">
+                        <button type="submit" class="btn">Run Database Update →</button>
+                    </form>
+                </div>
+            <?php else:
+                // Run the update
+                require_once __DIR__ . '/updater.php';
+                $updater = new DatabaseUpdater($config['db']);
+                if ($updater->run()) {
+                    echo '<div class="success">';
+                    echo '<h2>✅ Update Complete!</h2>';
+                    echo '<p>Your database has been updated successfully.</p>';
+                    echo '<ul style="text-align: left; display: inline-block;">';
+                    foreach ($updater->getMessages() as $message) {
+                        echo '<li>' . htmlspecialchars($message) . '</li>';
+                    }
+                    echo '</ul>';
+                    echo '<br><a href="/">Return to Strybk →</a>';
+                    echo '</div>';
+                } else {
+                    echo '<div class="error">';
+                    echo '<h2>Update Failed</h2>';
+                    foreach ($updater->getErrors() as $error) {
+                        echo '<p>' . htmlspecialchars($error) . '</p>';
+                    }
+                    echo '</div>';
+                }
+            ?>
+            <?php endif; ?>
+        <?php elseif (!empty($errors)): ?>
             <div class="error">
                 <?= implode('<br>', $errors) ?>
             </div>
