@@ -459,38 +459,6 @@ class PageController {
     /**
      * Compare two versions
      */
-    public function compareVersions(int $pageId): void {
-        $this->auth->requireAuth();
-        $userId = $this->auth->user()['id'];
-        
-        $page = $this->pageModel->find($pageId);
-        
-        if (!$page || !$this->bookModel->isOwner($page['book_id'], $userId)) {
-            header('Content-Type: application/json');
-            http_response_code(404);
-            echo json_encode(['error' => 'Page not found']);
-            return;
-        }
-        
-        $v1 = (int)($_GET['v1'] ?? 0);
-        $v2 = (int)($_GET['v2'] ?? 0);
-        
-        if (!$v1 || !$v2) {
-            header('Content-Type: application/json');
-            http_response_code(400);
-            echo json_encode(['error' => 'Version numbers required']);
-            return;
-        }
-        
-        $comparison = $this->versionModel->compareVersions($pageId, $v1, $v2);
-        
-        header('Content-Type: application/json');
-        echo json_encode($comparison);
-    }
-    
-    /**
-     * Compare two versions
-     */
     public function compareVersions(int $pageId, int $versionNumber): void {
         $this->auth->requireAuth();
         $userId = $this->auth->user()['id'];
