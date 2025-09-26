@@ -56,18 +56,16 @@
 // Generate consistent colors for book covers based on title
 function getBookColor($title) {
     $colors = [
-        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Purple
-        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink
-        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', // Blue
-        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green
-        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Sunset
-        'linear-gradient(135deg, #30cfd0 0%, #330867 100%)', // Ocean
-        'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', // Pastel
-        'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', // Rose
-        'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)', // Lavender
-        'linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%)', // Soft Pink
-        '#2E1A47', // Dark indigo (like Getting Real)
-        '#6C4AB6', // Purple (like Employee Handbook)
+        'linear-gradient(135deg, #111111 0%, #333333 100%)', // Black to dark gray
+        'linear-gradient(135deg, #333333 0%, #666666 100%)', // Dark gray to medium gray
+        'linear-gradient(135deg, #666666 0%, #999999 100%)', // Medium gray to light gray
+        'linear-gradient(135deg, #999999 0%, #CCCCCC 100%)', // Light gray to lighter gray
+        'linear-gradient(135deg, #111111 0%, #666666 100%)', // Black to medium gray
+        'linear-gradient(135deg, #333333 0%, #999999 100%)', // Dark to light gray
+        '#111111', // Black
+        '#333333', // Dark gray
+        '#666666', // Medium gray
+        '#999999', // Light gray
     ];
     
     // Use title hash to consistently select same color

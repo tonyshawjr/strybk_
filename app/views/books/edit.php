@@ -138,10 +138,13 @@ include __DIR__ . '/../partials/header.php';
 // Generate consistent colors for book covers based on title
 function getBookColor($title) {
     $colors = [
-        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        'linear-gradient(135deg, #111111 0%, #333333 100%)',
+        'linear-gradient(135deg, #333333 0%, #666666 100%)',
+        'linear-gradient(135deg, #666666 0%, #999999 100%)',
+        'linear-gradient(135deg, #111111 0%, #666666 100%)',
+        '#111111',
+        '#333333',
+        '#666666',
     ];
     $hash = crc32($title);
     $index = abs($hash) % count($colors);
@@ -464,8 +467,8 @@ function getBookColor($title) {
 }
 
 .page-list-item.active {
-    background: #FFF9E6;
-    border-left: 3px solid #FFA500;
+    background: #F5F5F5;
+    border-left: 3px solid #111111;
 }
 
 .page-title {
