@@ -1210,64 +1210,128 @@ function generateDiffView(oldText, newText) {
         return '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
     }
     
-    // Use a simpler approach - find the differences
-    const result = findDifferences(oldClean, newClean);
+    // Just show what changed in a simple way
+    let diffHtml = '<div class="diff-container">';
     
-    let diffHtml = '<div class="diff-container"><div class="diff-text">';
-    diffHtml += result;
+    // Show a simple before/after for clarity
+    const maxLength = 500; // Show first 500 chars to keep it readable
+    
+    diffHtml += '<div style="margin: 20px; line-height: 1.6;">';
+    diffHtml += '<h4 style="color: #666; margin-bottom: 10px;">Changes:</h4>';
+    
+    // Find what's different
+    const oldShort = oldClean.substring(0, maxLength);
+    const newShort = newClean.substring(0, maxLength);
+    
+    if (oldClean.length <= maxLength && newClean.length <= maxLength) {
+        // Short enough to show everything
+        diffHtml += '<div style="margin-bottom: 15px;">';
+        diffHtml += '<strong>From:</strong><br>';
+        diffHtml += `<span class="diff-removed">${escapeHtml(oldClean)}</span>`;
+        diffHtml += '</div>';
+        diffHtml += '<div>';
+        diffHtml += '<strong>To:</strong><br>';
+        diffHtml += `<span class="diff-added">${escapeHtml(newClean)}</span>`;
+        diffHtml += '</div>';
+    } else {
+        // Too long, show summary
+        diffHtml += `<p style="color: #999;">Content is too long to show full diff. Showing first ${maxLength} characters...</p>`;
+        diffHtml += '<div style="margin-bottom: 15px;">';
+        diffHtml += '<strong>From:</strong><br>';
+        diffHtml += `<span class="diff-removed">${escapeHtml(oldShort)}...</span>`;
+        diffHtml += '</div>';
+        diffHtml += '<div>';
+        diffHtml += '<strong>To:</strong><br>';
+        diffHtml += `<span class="diff-added">${escapeHtml(newShort)}...</span>`;
+        diffHtml += '</div>';
+    }
+    
     diffHtml += '</div></div>';
     
     return diffHtml;
 }
 
 function findDifferences(oldText, newText) {
-    // Simple character-based diff with word boundaries
+    // If identical, return as-is
     if (oldText === newText) {
         return escapeHtml(oldText);
     }
     
-    // Find the first difference
-    let firstDiff = 0;
-    while (firstDiff < oldText.length && firstDiff < newText.length && oldText[firstDiff] === newText[firstDiff]) {
-        firstDiff++;
+    // For very small changes, just show both versions
+    if (Math.abs(oldText.length - newText.length) > 100) {
+        // Large change - just show summary
+        return `
+            <div style="margin: 10px 0;">
+                <div style="margin-bottom: 10px;">
+                    <strong>Previous version (${oldText.length} characters):</strong><br>
+                    <span class="diff-removed">${escapeHtml(oldText.substring(0, 200))}...</span>
+                </div>
+                <div>
+                    <strong>Current version (${newText.length} characters):</strong><br>
+                    <span class="diff-added">${escapeHtml(newText.substring(0, 200))}...</span>
+                </div>
+            </div>
+        `;
     }
     
-    // Find the last difference (from the end)
-    let oldEnd = oldText.length - 1;
-    let newEnd = newText.length - 1;
-    while (oldEnd > firstDiff && newEnd > firstDiff && oldText[oldEnd] === newText[newEnd]) {
-        oldEnd--;
-        newEnd--;
-    }
+    // Use a simple LCS (Longest Common Subsequence) approach at word level
+    const oldWords = oldText.split(/\b/);
+    const newWords = newText.split(/\b/);
     
-    // Build the result
+    // Create a simple diff
     let result = '';
+    let i = 0, j = 0;
     
-    // Add the common beginning
-    if (firstDiff > 0) {
-        result += escapeHtml(oldText.substring(0, firstDiff));
-    }
-    
-    // Add the different middle part
-    const oldMiddle = oldText.substring(firstDiff, oldEnd + 1);
-    const newMiddle = newText.substring(firstDiff, newEnd + 1);
-    
-    if (oldMiddle && !newMiddle) {
-        // Only deletion
-        result += `<span class="diff-removed">${escapeHtml(oldMiddle)}</span>`;
-    } else if (!oldMiddle && newMiddle) {
-        // Only addition
-        result += `<span class="diff-added">${escapeHtml(newMiddle)}</span>`;
-    } else if (oldMiddle && newMiddle) {
-        // Both changed - show old then new
-        result += `<span class="diff-removed">${escapeHtml(oldMiddle)}</span>`;
-        result += ' ';
-        result += `<span class="diff-added">${escapeHtml(newMiddle)}</span>`;
-    }
-    
-    // Add the common ending
-    if (oldEnd < oldText.length - 1) {
-        result += escapeHtml(oldText.substring(oldEnd + 1));
+    while (i < oldWords.length || j < newWords.length) {
+        // Skip matching words
+        while (i < oldWords.length && j < newWords.length && oldWords[i] === newWords[j]) {
+            result += escapeHtml(oldWords[i]);
+            i++;
+            j++;
+        }
+        
+        // Collect differences
+        let oldDiff = '';
+        let newDiff = '';
+        
+        // Look for next match
+        let foundMatch = false;
+        for (let lookAhead = 1; lookAhead <= 5 && !foundMatch; lookAhead++) {
+            if (i + lookAhead < oldWords.length && j + lookAhead < newWords.length && 
+                oldWords[i + lookAhead] === newWords[j + lookAhead]) {
+                // Found a match ahead
+                while (i < i + lookAhead && i < oldWords.length) {
+                    oldDiff += oldWords[i++];
+                }
+                while (j < j + lookAhead && j < newWords.length) {
+                    newDiff += newWords[j++];
+                }
+                foundMatch = true;
+            }
+        }
+        
+        if (!foundMatch) {
+            // No match found, consume one word from each
+            if (i < oldWords.length) oldDiff = oldWords[i++];
+            if (j < newWords.length) newDiff = newWords[j++];
+        }
+        
+        // Show the differences
+        if (oldDiff && !newDiff) {
+            result += `<span class="diff-removed">${escapeHtml(oldDiff)}</span>`;
+        } else if (!oldDiff && newDiff) {
+            result += `<span class="diff-added">${escapeHtml(newDiff)}</span>`;
+        } else if (oldDiff && newDiff) {
+            if (oldDiff.trim() || newDiff.trim()) {
+                result += `<span class="diff-removed">${escapeHtml(oldDiff)}</span>`;
+                if (oldDiff.trim() && newDiff.trim()) {
+                    result += ' → ';
+                }
+                result += `<span class="diff-added">${escapeHtml(newDiff)}</span>`;
+            } else {
+                result += oldDiff; // Just whitespace
+            }
+        }
     }
     
     return result;
