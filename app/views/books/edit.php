@@ -26,48 +26,53 @@ include __DIR__ . '/../partials/header.php';
                 <h1 class="book-title-display"><?= htmlspecialchars($book['title']) ?></h1>
                 <p class="book-author-display"><?= htmlspecialchars($book['author'] ?? '37signals') ?></p>
                 
-                <!-- View Book Link -->
-                <?php if ($book['is_public']): ?>
-                    <a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-link">
-                        <i class="fa-regular fa-eye"></i>
-                        View Book
-                    </a>
-                <?php endif; ?>
-                
-                <!-- Privacy Toggle -->
-                <div class="privacy-toggle-container">
-                    <button class="privacy-toggle <?= $book['is_public'] ? 'public' : 'private' ?>" 
-                            data-book-id="<?= $book['id'] ?>" 
-                            data-current="<?= $book['is_public'] ? 'public' : 'private' ?>">
-                        <span class="toggle-icon">
-                            <?php if ($book['is_public']): ?>
-                                <i class="fa-regular fa-eye"></i>
-                            <?php else: ?>
+                <!-- Controls Section -->
+                <div class="book-controls">
+                    <!-- Privacy Toggle Switch -->
+                    <div class="privacy-switch-container">
+                        <input type="checkbox" 
+                               id="privacy-toggle" 
+                               class="privacy-switch-input" 
+                               <?= $book['is_public'] ? 'checked' : '' ?>
+                               data-book-id="<?= $book['id'] ?>">
+                        <label for="privacy-toggle" class="privacy-switch-label">
+                            <span class="switch-icon private-icon">
                                 <i class="fa-solid fa-lock"></i>
-                            <?php endif; ?>
-                        </span>
-                        <span class="toggle-text"><?= $book['is_public'] ? 'Public' : 'Private' ?></span>
-                    </button>
+                            </span>
+                            <span class="switch-icon public-icon">
+                                <i class="fa-solid fa-globe"></i>
+                            </span>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
                     
+                    <!-- View Book Button -->
                     <?php if ($book['is_public']): ?>
-                        <div class="public-link">
-                            <input type="text" readonly value="<?= htmlspecialchars($_SERVER['HTTP_HOST'] . '/read/' . $book['slug']) ?>" class="link-input">
-                            <button class="copy-link" onclick="copyLink(this)">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </div>
+                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-btn" title="View Book">
+                            <i class="fa-regular fa-eye"></i>
+                        </a>
                     <?php endif; ?>
                 </div>
                 
+                <!-- Public Link -->
+                <?php if ($book['is_public']): ?>
+                    <div class="public-link-container">
+                        <span class="public-link-text"><?= htmlspecialchars($_SERVER['HTTP_HOST'] . '/read/' . $book['slug']) ?></span>
+                        <button class="copy-btn" onclick="copyLink(this)" title="Copy link">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                <?php endif; ?>
+                
                 <!-- Book Actions -->
                 <div class="book-actions">
-                    <button class="btn-icon" onclick="editBookDetails()" title="Edit details">
+                    <button class="action-btn" onclick="editBookDetails()" title="Edit details">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </button>
-                    <button class="btn-icon" onclick="shareBook()" title="Share">
+                    <button class="action-btn" onclick="shareBook()" title="Share">
                         <i class="fa-solid fa-arrow-up-from-bracket"></i>
                     </button>
-                    <button class="btn-icon" onclick="exportBook()" title="Export">
+                    <button class="action-btn" onclick="exportBook()" title="Export">
                         <i class="fa-solid fa-file-export"></i>
                     </button>
                 </div>
