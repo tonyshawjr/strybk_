@@ -188,8 +188,6 @@ include __DIR__ . '/../partials/header.php';
     position: sticky;
     top: 0px;
     z-index: 100;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.08);
-    clip-path: inset(0 -10px -10px -10px);
 }
 
 .editor-toolbar-inner {

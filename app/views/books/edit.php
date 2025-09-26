@@ -814,53 +814,13 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
     const bookId = this.dataset.bookId;
     const current = this.dataset.current;
     const newStatus = current === 'public' ? 'private' : 'public';
+    const button = this;
     
-    // Update UI optimistically
-    this.classList.toggle('public');
-    this.classList.toggle('private');
-    this.dataset.current = newStatus;
-    this.querySelector('.toggle-text').textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+    // Disable button during update
+    button.disabled = true;
+    button.style.opacity = '0.5';
     
-    // Update icon
-    if (newStatus === 'public') {
-        this.querySelector('.toggle-icon').innerHTML = `<i class="fa-regular fa-eye"></i>`;
-        
-        // Show View Book link
-        const viewLink = document.querySelector('.view-book-link');
-        if (!viewLink) {
-            const bookMeta = document.querySelector('.book-meta-section');
-            const linkHtml = `
-                <a href="/read/<?= $book['slug'] ?>" target="_blank" class="view-book-link">
-                    <i class="fa-regular fa-eye"></i>
-                    View Book
-                </a>
-            `;
-            // Insert after author
-            const author = bookMeta.querySelector('.book-author-display');
-            author.insertAdjacentHTML('afterend', linkHtml);
-        }
-        
-        // Show public link
-        if (!document.querySelector('.public-link')) {
-            const linkHtml = `
-                <div class="public-link">
-                    <input type="text" readonly value="${window.location.host}/read/<?= $book['slug'] ?>" class="link-input">
-                    <button class="copy-link" onclick="copyLink(this)">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>
-            `;
-            this.parentElement.insertAdjacentHTML('beforeend', linkHtml);
-        }
-    } else {
-        this.querySelector('.toggle-icon').innerHTML = `<i class="fa-solid fa-lock"></i>`;
-        // Hide View Book link
-        document.querySelector('.view-book-link')?.remove();
-        // Hide public link
-        document.querySelector('.public-link')?.remove();
-    }
-    
-    // Send update to server
+    // Send update to server first
     fetch('/books/' + bookId + '/visibility', {
         method: 'POST',
         headers: {
@@ -870,16 +830,72 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('Visibility updated successfully');
+            // Update UI only after successful server update
+            const actualStatus = data.is_public ? 'public' : 'private';
+            
+            // Update button classes
+            if (actualStatus === 'public') {
+                button.classList.add('public');
+                button.classList.remove('private');
+            } else {
+                button.classList.add('private');
+                button.classList.remove('public');
+            }
+            
+            button.dataset.current = actualStatus;
+            button.querySelector('.toggle-text').textContent = actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1);
+            
+            // Update icon
+            if (actualStatus === 'public') {
+                button.querySelector('.toggle-icon').innerHTML = `<i class="fa-regular fa-eye"></i>`;
+                
+                // Show View Book link
+                const viewLink = document.querySelector('.view-book-link');
+                if (!viewLink) {
+                    const bookMeta = document.querySelector('.book-meta-section');
+                    const linkHtml = `
+                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>" target="_blank" class="view-book-link">
+                            <i class="fa-regular fa-eye"></i>
+                            View Book
+                        </a>
+                    `;
+                    // Insert after author
+                    const author = bookMeta.querySelector('.book-author-display');
+                    author.insertAdjacentHTML('afterend', linkHtml);
+                }
+                
+                // Show public link
+                if (!document.querySelector('.public-link')) {
+                    const linkHtml = `
+                        <div class="public-link">
+                            <input type="text" readonly value="${window.location.host}/read/<?= htmlspecialchars($book['slug']) ?>" class="link-input">
+                            <button class="copy-link" onclick="copyLink(this)">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    `;
+                    button.parentElement.insertAdjacentHTML('beforeend', linkHtml);
+                }
+            } else {
+                button.querySelector('.toggle-icon').innerHTML = `<i class="fa-solid fa-lock"></i>`;
+                // Hide View Book link
+                document.querySelector('.view-book-link')?.remove();
+                // Hide public link
+                document.querySelector('.public-link')?.remove();
+            }
         } else {
-            // Revert UI on error
             console.error('Failed to update visibility');
-            location.reload(); // Reload to show correct state
+            alert('Failed to update book visibility. Please try again.');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        location.reload(); // Reload to show correct state
+        alert('An error occurred. Please try again.');
+    })
+    .finally(() => {
+        // Re-enable button
+        button.disabled = false;
+        button.style.opacity = '';
     });
 });
 
