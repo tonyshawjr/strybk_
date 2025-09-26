@@ -191,6 +191,7 @@ function getBookColor($title) {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    box-shadow: none;
 }
 
 .add-book-card:hover .add-book-cover {
