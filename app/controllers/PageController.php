@@ -95,10 +95,15 @@ class PageController {
         // Generate slug
         $slug = $this->pageModel->generateSlug($title, $bookId);
         
-        // Calculate word count for chapter/section content
+        // Calculate word count - always calculate for text content
         $wordCount = 0;
-        if (in_array($kind, ['chapter', 'section'])) {
-            $wordCount = str_word_count(strip_tags($content));
+        if (!empty($content) && $kind !== 'picture') {
+            // Strip all HTML tags and decode HTML entities
+            $plainText = html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            // Remove extra whitespace
+            $plainText = preg_replace('/\s+/', ' ', trim($plainText));
+            // Count words
+            $wordCount = str_word_count($plainText);
         }
         
         // Create page
@@ -201,10 +206,15 @@ class PageController {
             }
         }
         
-        // Calculate word count
+        // Calculate word count - always calculate for text content
         $wordCount = 0;
-        if (in_array($kind, ['chapter', 'section'])) {
-            $wordCount = str_word_count(strip_tags($content));
+        if (!empty($content) && $kind !== 'picture') {
+            // Strip all HTML tags and decode HTML entities
+            $plainText = html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            // Remove extra whitespace
+            $plainText = preg_replace('/\s+/', ' ', trim($plainText));
+            // Count words
+            $wordCount = str_word_count($plainText);
         }
         
         // Update page
@@ -476,6 +486,51 @@ class PageController {
         
         header('Content-Type: application/json');
         echo json_encode($comparison);
+    }
+    
+    /**
+     * Compare two versions
+     */
+    public function compareVersions(int $pageId, int $versionNumber): void {
+        $this->auth->requireAuth();
+        $userId = $this->auth->user()['id'];
+        
+        $page = $this->pageModel->find($pageId);
+        
+        if (!$page || !$this->bookModel->isOwner($page['book_id'], $userId)) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Page not found']);
+            return;
+        }
+        
+        // Get the specified version
+        $version1 = $this->versionModel->getVersion($pageId, $versionNumber);
+        
+        if (!$version1) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Version not found']);
+            return;
+        }
+        
+        // Get current version (the actual page content)
+        $currentVersion = [
+            'version_number' => 'current',
+            'title' => $page['title'],
+            'content' => $page['content'],
+            'word_count' => $page['word_count'] ?? str_word_count(strip_tags($page['content'])),
+            'created_at' => $page['updated_at'] ?? date('Y-m-d H:i:s')
+        ];
+        
+        // Return comparison data
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'version1' => $version1,
+            'version2' => $currentVersion,
+            'page' => $page
+        ]);
     }
     
     /**

@@ -45,6 +45,9 @@ class PageVersion {
             'version_count' => $versionNumber
         ], 'id = :id', ['id' => $pageId]);
         
+        // Prune old versions (keep last 50)
+        $this->pruneVersions($pageId, 50);
+        
         return $versionId;
     }
     

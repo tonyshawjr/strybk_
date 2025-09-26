@@ -1104,8 +1104,79 @@ function backToVersionList() {
 }
 
 function compareWithCurrent(pageId, versionNumber) {
-    alert('Version comparison view coming soon!');
-    // TODO: Implement diff view
+    // Load both versions and display diff
+    const modal = document.getElementById('version-history-modal');
+    const viewer = document.getElementById('version-viewer');
+    const list = document.getElementById('version-list');
+    
+    // Hide list, show viewer
+    list.style.display = 'none';
+    viewer.style.display = 'block';
+    viewer.innerHTML = '<div class="version-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading comparison...</div>';
+    
+    // Fetch comparison data
+    fetch(`/pages/${pageId}/compare/${versionNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayComparison(data);
+            } else {
+                viewer.innerHTML = '<p style="color: #ef4444;">Error loading comparison</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading comparison:', error);
+            viewer.innerHTML = '<p style="color: #ef4444;">Error loading comparison</p>';
+        });
+}
+
+function displayComparison(data) {
+    const viewer = document.getElementById('version-viewer');
+    
+    let html = `
+        <div class="version-compare">
+            <div class="compare-header">
+                <button class="btn-back" onclick="backToVersionList()">
+                    <i class="fa-solid fa-arrow-left"></i> Back to History
+                </button>
+                <h3>Comparing Version ${data.version1.version_number} with Current Version</h3>
+            </div>
+            <div class="compare-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Version ${data.version1.version_number}:</span>
+                    <span class="stat-value">${data.version1.word_count || 0} words</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Current Version:</span>
+                    <span class="stat-value">${data.version2.word_count || 0} words</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Difference:</span>
+                    <span class="stat-value">${Math.abs((data.version2.word_count || 0) - (data.version1.word_count || 0))} words</span>
+                </div>
+            </div>
+            <div class="compare-content">
+                <div class="version-side">
+                    <h4>Version ${data.version1.version_number} <small>(${formatDate(data.version1.created_at)})</small></h4>
+                    <div class="version-content">${data.version1.content || '<em>Empty</em>'}</div>
+                </div>
+                <div class="version-side">
+                    <h4>Current Version</h4>
+                    <div class="version-content">${data.version2.content || '<em>Empty</em>'}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    viewer.innerHTML = html;
+}
+
+function backToVersionList() {
+    const viewer = document.getElementById('version-viewer');
+    const list = document.getElementById('version-list');
+    
+    viewer.style.display = 'none';
+    list.style.display = 'block';
 }
 
 function confirmRestore(pageId, versionNumber) {
@@ -1128,6 +1199,11 @@ function restoreVersion(pageId, versionNumber) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Clear the draft from localStorage to prevent it from overriding the restored version
+            const bookId = <?= $page['book_id'] ?>;
+            const draftKey = `strybk_draft_${bookId}_${pageId}`;
+            localStorage.removeItem(draftKey);
+            
             alert('Version restored successfully!');
             closeVersionHistory();
             location.reload(); // Reload to show restored content
@@ -1443,6 +1519,87 @@ function escapeHtml(text) {
     max-height: 400px;
     overflow-y: auto;
     padding-right: 16px;
+}
+
+/* Version Comparison Styles */
+.version-compare {
+    padding: 20px;
+}
+
+.compare-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.compare-header h3 {
+    margin: 0;
+    flex: 1;
+    color: #111111;
+}
+
+.btn-back {
+    background: #F5F5F5;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #111111;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    background: #E5E5E5;
+}
+
+.compare-stats {
+    display: flex;
+    gap: 24px;
+    padding: 16px;
+    background: #F9F9F9;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.compare-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.version-side {
+    border: 1px solid #E5E5E5;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.version-side h4 {
+    margin: 0;
+    padding: 12px 16px;
+    background: #F5F5F5;
+    border-bottom: 1px solid #E5E5E5;
+    font-size: 16px;
+    color: #111111;
+}
+
+.version-side h4 small {
+    color: #999999;
+    font-weight: normal;
+    font-size: 14px;
+}
+
+.version-content {
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333333;
 }
 
 /* Responsive adjustments */
