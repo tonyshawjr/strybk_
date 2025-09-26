@@ -389,6 +389,56 @@
             pointer-events: none;
         }
         
+        /* Next button with title */
+        .nav-button.next-with-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 50px;
+            color: var(--primary);
+            font-weight: 500;
+            max-width: 300px;
+            position: relative;
+        }
+        
+        .nav-button.next-with-title:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .next-label {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+            text-align: left;
+        }
+        
+        .next-prefix {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .next-title {
+            font-size: 0.9375rem;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+        }
+        
+        .next-arrow {
+            font-size: 1.25rem;
+            margin-left: auto;
+        }
+        
         /* Mobile responsive */
         @media (max-width: 768px) {
             .toc-sidebar {
@@ -410,6 +460,14 @@
             
             .page-title {
                 font-size: 2rem;
+            }
+            
+            .nav-button.next-with-title {
+                max-width: 200px;
+            }
+            
+            .next-title {
+                font-size: 0.875rem;
             }
             
             .page-content {
@@ -606,9 +664,12 @@
                     <?php endif; ?>
                     
                     <?php if ($nextPage): ?>
-                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button">
-                            Next
-                            <i class="fa-solid fa-chevron-right"></i>
+                        <a href="/read/<?= htmlspecialchars($book['slug']) ?>/<?= htmlspecialchars($nextPage['slug']) ?>" class="nav-button next-with-title">
+                            <span class="next-label">
+                                <span class="next-prefix">Next:</span>
+                                <span class="next-title"><?= htmlspecialchars($nextPage['title']) ?></span>
+                            </span>
+                            <span class="next-arrow">→</span>
                         </a>
                     <?php else: ?>
                         <span class="nav-button disabled">
