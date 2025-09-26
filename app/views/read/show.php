@@ -262,6 +262,17 @@
             margin-bottom: 1.5rem;
         }
         
+        .page-content strong,
+        .page-content b {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        .page-content em,
+        .page-content i {
+            font-style: italic;
+        }
+        
         .page-content ul,
         .page-content ol {
             margin-bottom: 1.5rem;
@@ -555,7 +566,18 @@
                     </header>
                     
                     <div class="page-content">
-                        <?= $currentPage['rendered_content'] ?? '' ?>
+                        <?php 
+                        // Display content - if it's already HTML, show it directly
+                        // Otherwise use the rendered_content from markdown
+                        $content = $currentPage['content'] ?? '';
+                        if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
+                            // Content appears to be HTML
+                            echo $content;
+                        } else {
+                            // Content is plain text or markdown, use rendered version
+                            echo $currentPage['rendered_content'] ?? $content;
+                        }
+                        ?>
                     </div>
                 <?php endif; ?>
                 
