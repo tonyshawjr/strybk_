@@ -570,11 +570,72 @@ document.getElementById('editor').addEventListener('input', function() {
     }
 });
 
-// Sync content to hidden textarea before submit
+// Handle form submission via AJAX
 document.getElementById('page-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
     const editor = document.getElementById('editor');
     const textarea = document.getElementById('content-textarea');
     textarea.value = editor.innerHTML;
+    
+    // Get form data
+    const formData = new FormData(this);
+    
+    // Show saving indicator
+    const saveBtn = document.querySelector('.btn-primary');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saving...';
+    saveBtn.disabled = true;
+    
+    // Also update toolbar save button if exists
+    const toolbarSave = document.querySelector('[data-command="check"]');
+    if (toolbarSave) {
+        toolbarSave.style.color = '#999999';
+    }
+    
+    // Submit via fetch
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(data => {
+        // Show success feedback
+        saveBtn.textContent = 'Saved!';
+        saveBtn.style.background = '#10b981';
+        
+        if (toolbarSave) {
+            toolbarSave.style.color = '#10b981';
+        }
+        
+        // Clear draft since we saved
+        localStorage.removeItem('draft-page-' + <?= $page['id'] ?>);
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+            saveBtn.style.background = '';
+            
+            if (toolbarSave) {
+                toolbarSave.style.color = '';
+            }
+        }, 2000);
+    })
+    .catch(error => {
+        console.error('Error saving:', error);
+        saveBtn.textContent = 'Error saving';
+        saveBtn.style.background = '#ef4444';
+        
+        setTimeout(() => {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+            saveBtn.style.background = '';
+        }, 3000);
+    });
 });
 
 // View mode toggle
@@ -695,9 +756,65 @@ window.addEventListener('load', function() {
     }
 });
 
-// Clear draft on successful save
-document.getElementById('page-form').addEventListener('submit', function() {
-    localStorage.removeItem('draft-page-' + <?= $page['id'] ?>);
+// Handle paste events to convert markdown to HTML
+document.getElementById('editor').addEventListener('paste', function(e) {
+    e.preventDefault();
+    
+    // Get pasted text
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    
+    // Simple markdown to HTML conversion
+    let html = text;
+    
+    // Convert markdown to HTML
+    // Headers
+    html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+    
+    // Bold and italic
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>'); // Bold + Italic
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+    html = html.replace(/___(.*?)___/g, '<strong><em>$1</em></strong>'); // Bold + Italic
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>'); // Bold
+    html = html.replace(/_(.*?)_/g, '<em>$1</em>'); // Italic
+    
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    
+    // Code blocks
+    html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Blockquotes
+    html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+    
+    // Lists
+    html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
+    html = html.replace(/^(\d+)\. (.*?)$/gm, '<li>$2</li>');
+    
+    // Wrap consecutive list items in ul/ol tags
+    html = html.replace(/(<li>.*?<\/li>\n?)+/g, function(match) {
+        return '<ul>' + match + '</ul>';
+    });
+    
+    // Paragraphs - wrap lines that aren't already wrapped
+    const lines = html.split('\n');
+    const processedLines = lines.map(line => {
+        line = line.trim();
+        if (line && !line.startsWith('<') && !line.endsWith('>')) {
+            return '<p>' + line + '</p>';
+        }
+        return line;
+    });
+    html = processedLines.join('\n');
+    
+    // Clean up empty paragraphs
+    html = html.replace(/<p>\s*<\/p>/g, '');
+    
+    // Insert the converted HTML
+    document.execCommand('insertHTML', false, html);
 });
 
 // Keyboard shortcuts and editor behavior

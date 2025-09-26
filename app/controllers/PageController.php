@@ -215,14 +215,33 @@ class PageController {
                 'word_count' => $wordCount
             ]);
             
-            flash('Page updated successfully!', 'success');
-            
-            // Get book for redirect
-            $book = $this->bookModel->find($page['book_id']);
-            redirect('/books/' . $book['slug'] . '/edit');
+            // Check if this is an AJAX request
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                // Return JSON response for AJAX
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Page updated successfully!']);
+                exit;
+            } else {
+                // Regular form submission - redirect
+                flash('Page updated successfully!', 'success');
+                
+                // Get book for redirect
+                $book = $this->bookModel->find($page['book_id']);
+                redirect('/books/' . $book['slug'] . '/edit');
+            }
         } catch (Exception $e) {
-            flash('Error updating page. Please try again.', 'error');
-            redirect('/pages/' . $id . '/edit');
+            // Check if this is an AJAX request
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Error updating page']);
+                exit;
+            } else {
+                flash('Error updating page. Please try again.', 'error');
+                redirect('/pages/' . $id . '/edit');
+            }
         }
     }
     
