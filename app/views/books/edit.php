@@ -2,13 +2,7 @@
 
 <div class="container">
     <div class="page-header">
-        <a href="/books" class="btn-back">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
-            Back to Library
-        </a>
-        <h1>Edit Book</h1>
+        <h1><?= htmlspecialchars($book['title']) ?></h1>
     </div>
 
     <div class="edit-layout">
