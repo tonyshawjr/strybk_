@@ -33,6 +33,7 @@ class Router {
         $this->routes['GET']['/books/{slug}/edit'] = 'BookController@edit';
         $this->routes['POST']['/books/{id}/update'] = 'BookController@update';
         $this->routes['POST']['/books/{id}/delete'] = 'BookController@delete';
+        $this->routes['POST']['/books/{id}/visibility'] = 'BookController@toggleVisibility';
         
         // Pages routes
         $this->routes['GET']['/books/{book_id}/pages/new'] = 'PageController@create';
