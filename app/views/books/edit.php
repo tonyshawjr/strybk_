@@ -79,47 +79,64 @@ include __DIR__ . '/../partials/header.php';
                 </div>
                 
                 <div class="pages-actions">
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" data-mode="edit">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                            <span>Edit</span>
+                        </button>
+                        <button class="mode-btn" data-mode="reorder">
+                            <i class="fa-solid fa-arrows-up-down"></i>
+                            <span>Reorder</span>
+                        </button>
+                    </div>
                     <a href="/books/<?= $book['id'] ?>/pages/new" class="add-page-btn">
                         <i class="fa-solid fa-plus"></i>
                     </a>
-                    <button class="minimize-btn">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
                 </div>
             </div>
             
             <!-- Gallery View -->
-            <div id="gallery-view" class="pages-view gallery-view active">
+            <div id="gallery-view" class="pages-view gallery-view active" data-mode="edit">
                 <div class="pages-grid" id="pages-grid">
                     <?php foreach ($pages as $page): ?>
-                        <div class="page-card" data-id="<?= $page['id'] ?>">
-                            <div class="page-thumbnail">
-                                <div class="page-content-preview">
-                                    <h3><?= htmlspecialchars($page['title']) ?></h3>
-                                    <p><?= htmlspecialchars(substr(strip_tags($page['content'] ?? ''), 0, 100)) ?>...</p>
+                        <a href="/pages/<?= $page['id'] ?>/edit" class="page-card-link">
+                            <div class="page-card" data-id="<?= $page['id'] ?>">
+                                <div class="page-thumbnail">
+                                    <div class="page-content-preview">
+                                        <h3><?= htmlspecialchars($page['title']) ?></h3>
+                                        <p><?= htmlspecialchars(substr(strip_tags($page['content'] ?? ''), 0, 100)) ?>...</p>
+                                    </div>
+                                    <div class="drag-indicator">
+                                        <i class="fa-solid fa-grip-vertical"></i>
+                                    </div>
+                                </div>
+                                <div class="page-info">
+                                    <h4><?= htmlspecialchars($page['title']) ?></h4>
+                                    <span class="word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
                                 </div>
                             </div>
-                            <div class="page-info">
-                                <h4><?= htmlspecialchars($page['title']) ?></h4>
-                                <span class="word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
-                            </div>
-                        </div>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             </div>
             
             <!-- List View -->
-            <div id="list-view" class="pages-view list-view">
+            <div id="list-view" class="pages-view list-view" data-mode="edit">
                 <div class="pages-list" id="pages-list">
                     <div class="list-header">
                         <span class="chapter-indicator">Welcome</span>
                         <span class="word-count-header">134 words</span>
                     </div>
                     <?php foreach ($pages as $index => $page): ?>
-                        <div class="page-list-item <?= $index === 0 ? 'active' : '' ?>" data-id="<?= $page['id'] ?>">
-                            <span class="page-title"><?= htmlspecialchars($page['title']) ?></span>
-                            <span class="page-word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
-                        </div>
+                        <a href="/pages/<?= $page['id'] ?>/edit" class="page-list-link">
+                            <div class="page-list-item <?= $index === 0 ? 'active' : '' ?>" data-id="<?= $page['id'] ?>">
+                                <span class="drag-handle">
+                                    <i class="fa-solid fa-grip-vertical"></i>
+                                </span>
+                                <span class="page-title"><?= htmlspecialchars($page['title']) ?></span>
+                                <span class="page-word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
+                            </div>
+                        </a>
                     <?php endforeach; ?>
                     
                     <?php if (count($pages) > 10): ?>
@@ -338,7 +355,52 @@ function getBookColor($title) {
 
 .pages-actions {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 16px;
+}
+
+.mode-toggle {
+    display: flex;
+    gap: 0;
+    background: #F5F5F5;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666666;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+}
+
+.mode-btn i {
+    font-size: 14px;
+}
+
+.mode-btn span {
+    display: none;
+}
+
+.mode-btn.active {
+    background: white;
+    color: #111111;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+@media (min-width: 768px) {
+    .mode-btn span {
+        display: inline;
+    }
 }
 
 .add-page-btn {
@@ -358,23 +420,6 @@ function getBookColor($title) {
     transform: scale(1.05);
 }
 
-.minimize-btn {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #E5E5E5;
-    background: white;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.minimize-btn:hover {
-    background: #F5F5F5;
-}
-
 /* Gallery View */
 .pages-view {
     display: none;
@@ -390,8 +435,38 @@ function getBookColor($title) {
     gap: 24px;
 }
 
-.page-card {
+.page-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+/* Edit mode styles */
+[data-mode="edit"] .page-card-link {
+    cursor: pointer;
+}
+
+[data-mode="edit"] .page-card {
+    cursor: pointer;
+}
+
+[data-mode="edit"] .drag-indicator,
+[data-mode="edit"] .drag-handle {
+    display: none;
+}
+
+/* Reorder mode styles */
+[data-mode="reorder"] .page-card-link {
+    pointer-events: none;
+}
+
+[data-mode="reorder"] .page-card {
     cursor: move;
+}
+
+[data-mode="reorder"] .drag-indicator,
+[data-mode="reorder"] .drag-handle {
+    display: flex;
 }
 
 .page-thumbnail {
@@ -403,11 +478,32 @@ function getBookColor($title) {
     margin-bottom: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
+    position: relative;
 }
 
-.page-card:hover .page-thumbnail {
+.drag-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 4px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #666666;
+    font-size: 12px;
+}
+
+[data-mode="edit"] .page-card:hover .page-thumbnail {
     border-color: #111111;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+[data-mode="reorder"] .page-card:hover .drag-indicator {
+    background: #111111;
+    color: white;
 }
 
 .page-content-preview {
@@ -453,13 +549,41 @@ function getBookColor($title) {
     color: #111111;
 }
 
+.page-list-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 .page-list-item {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
     padding: 12px 20px;
     border-bottom: 1px solid #F0F0F0;
-    cursor: pointer;
     transition: all 0.2s ease;
+}
+
+.drag-handle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    margin-right: 12px;
+    color: #999999;
+    font-size: 12px;
+}
+
+[data-mode="reorder"] .drag-handle:hover {
+    color: #111111;
+}
+
+[data-mode="edit"] .page-list-link {
+    cursor: pointer;
+}
+
+[data-mode="reorder"] .page-list-link {
+    pointer-events: none;
+    cursor: move;
 }
 
 .page-list-item:hover {
@@ -472,6 +596,7 @@ function getBookColor($title) {
 }
 
 .page-title {
+    flex: 1;
     color: #111111;
     font-size: 14px;
 }
@@ -479,6 +604,7 @@ function getBookColor($title) {
 .page-word-count {
     color: #999999;
     font-size: 14px;
+    margin-left: auto;
 }
 
 .list-section {
@@ -541,6 +667,35 @@ function getBookColor($title) {
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
+// Current mode state
+let currentMode = 'edit';
+let gallerySortable = null;
+let listSortable = null;
+
+// Mode Toggle
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const mode = this.dataset.mode;
+        
+        // Update active button
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Update mode
+        currentMode = mode;
+        document.querySelectorAll('.pages-view').forEach(view => {
+            view.dataset.mode = mode;
+        });
+        
+        // Enable/disable sortable based on mode
+        if (mode === 'reorder') {
+            enableSortable();
+        } else {
+            disableSortable();
+        }
+    });
+});
+
 // View Toggle
 document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -556,31 +711,52 @@ document.querySelectorAll('.view-btn').forEach(btn => {
     });
 });
 
-// Initialize SortableJS for both views
-const galleryGrid = document.getElementById('pages-grid');
-if (galleryGrid) {
-    Sortable.create(galleryGrid, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        dragClass: 'sortable-drag',
-        onEnd: function(evt) {
-            updatePageOrder();
-        }
-    });
+// Initialize SortableJS instances
+function initializeSortable() {
+    const galleryGrid = document.getElementById('pages-grid');
+    if (galleryGrid) {
+        gallerySortable = Sortable.create(galleryGrid, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            handle: '.page-card',
+            disabled: true, // Start disabled (edit mode is default)
+            onEnd: function(evt) {
+                updatePageOrder();
+            }
+        });
+    }
+    
+    const pagesList = document.getElementById('pages-list');
+    if (pagesList) {
+        listSortable = Sortable.create(pagesList, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            handle: '.page-list-item',
+            filter: '.list-header, .list-section',
+            disabled: true, // Start disabled (edit mode is default)
+            onEnd: function(evt) {
+                updatePageOrder();
+            }
+        });
+    }
 }
 
-const pagesList = document.getElementById('pages-list');
-if (pagesList) {
-    Sortable.create(pagesList, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        dragClass: 'sortable-drag',
-        filter: '.list-header, .list-section',
-        onEnd: function(evt) {
-            updatePageOrder();
-        }
-    });
+// Enable sortable for reorder mode
+function enableSortable() {
+    if (gallerySortable) gallerySortable.option('disabled', false);
+    if (listSortable) listSortable.option('disabled', false);
 }
+
+// Disable sortable for edit mode
+function disableSortable() {
+    if (gallerySortable) gallerySortable.option('disabled', true);
+    if (listSortable) listSortable.option('disabled', true);
+}
+
+// Initialize on page load
+initializeSortable();
 
 // Update page order via AJAX
 function updatePageOrder() {
