@@ -136,10 +136,7 @@ include __DIR__ . '/../partials/header.php';
             <!-- List View -->
             <div id="list-view" class="pages-view list-view" data-mode="edit">
                 <div class="pages-list" id="pages-list">
-                    <div class="list-header">
-                        <span class="chapter-indicator">Welcome</span>
-                        <span class="word-count-header">134 words</span>
-                    </div>
+
                     <?php foreach ($pages as $index => $page): ?>
                         <a href="/pages/<?= $page['id'] ?>/edit" class="page-list-link">
                             <div class="page-list-item <?= $index === 0 ? 'active' : '' ?>" data-id="<?= $page['id'] ?>">
@@ -626,22 +623,16 @@ function getBookColor($title) {
     color: #999999;
 }
 
-/* List View */
+/* List View - Table of Contents Style */
 .list-view {
-    background: white;
-    border: 1px solid #E5E5E5;
-    border-radius: 8px;
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
 }
 
-.list-header {
-    display: flex;
-    justify-content: space-between;
-    padding: 16px 20px;
-    background: #FAFAFA;
-    border-bottom: 1px solid #E5E5E5;
-    font-weight: 600;
-    color: #111111;
+.pages-list {
+    padding: 0;
 }
 
 .page-list-link {
@@ -652,10 +643,16 @@ function getBookColor($title) {
 
 .page-list-item {
     display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    border-bottom: 1px solid #F0F0F0;
+    align-items: baseline;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px dotted #E5E5E5;
     transition: all 0.2s ease;
+    position: relative;
+}
+
+.page-list-item:last-child {
+    border-bottom: none;
 }
 
 .drag-handle {
@@ -666,6 +663,8 @@ function getBookColor($title) {
     margin-right: 12px;
     color: #999999;
     font-size: 12px;
+    position: absolute;
+    left: -24px;
 }
 
 [data-mode="reorder"] .drag-handle:hover {
@@ -682,39 +681,59 @@ function getBookColor($title) {
 }
 
 .page-list-item:hover {
-    background: #FAFAFA;
+    background: transparent;
+}
+
+.page-list-item:hover .page-title {
+    color: #000000;
 }
 
 .page-list-item.active {
-    background: #F5F5F5;
-    border-left: 3px solid #111111;
+    background: transparent;
+    border-left: none;
+}
+
+.page-list-item.active::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    width: 4px;
+    height: 100%;
+    background: #FF6B35;
+    border-radius: 2px;
 }
 
 .page-title {
     flex: 1;
     color: #111111;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.8;
+    padding-right: 16px;
 }
 
 .page-word-count {
     color: #999999;
     font-size: 14px;
     margin-left: auto;
+    text-align: right;
+    min-width: 80px;
 }
 
 .list-section {
-    margin-top: 24px;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #E5E5E5;
 }
 
 .list-section h5 {
-    padding: 12px 20px;
-    background: #FAFAFA;
-    border-top: 1px solid #E5E5E5;
-    border-bottom: 1px solid #E5E5E5;
-    font-size: 14px;
-    font-weight: 600;
+    padding: 0 0 8px 0;
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
     color: #111111;
-    margin: 0;
+    margin: 0 0 8px 0;
 }
 
 /* Sortable styles */
