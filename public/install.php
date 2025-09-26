@@ -48,16 +48,34 @@ $isInstalled = $configFile && file_exists($configFile);
 $mode = $isInstalled ? 'update' : 'install';
 
 // If installed, load config for updates
+$config = null;
 if ($isInstalled) {
-    require_once $configFile;
-    // Database class is included via autoload in config, no need to require it separately
+    $config = require_once $configFile;
+    // Database class is included via autoload in config if needed
 }
 
 // Handle update mode
-if ($mode === 'update' && isset($_GET['run'])) {
+if ($mode === 'update' && isset($_GET['run']) && $config) {
     try {
-        $dsn = "mysql:host={$config['db']['host']};dbname={$config['db']['dbname']};charset=utf8mb4";
-        $db = new PDO($dsn, $config['db']['username'], $config['db']['password'], [
+        // Handle both old and new config formats
+        $dbConfig = isset($config['db']) ? $config['db'] : (isset($config['database']) ? $config['database'] : null);
+        
+        if (!$dbConfig) {
+            throw new Exception('Database configuration not found in config file');
+        }
+        
+        // Map config keys properly
+        $host = isset($dbConfig['host']) ? $dbConfig['host'] : 'localhost';
+        $dbname = isset($dbConfig['dbname']) ? $dbConfig['dbname'] : (isset($dbConfig['name']) ? $dbConfig['name'] : '');
+        $username = isset($dbConfig['username']) ? $dbConfig['username'] : '';
+        $password = isset($dbConfig['password']) ? $dbConfig['password'] : '';
+        
+        if (empty($dbname) || empty($username)) {
+            throw new Exception('Invalid database configuration');
+        }
+        
+        $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
+        $db = new PDO($dsn, $username, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
         ]);
