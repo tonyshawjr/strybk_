@@ -567,14 +567,24 @@
                     
                     <div class="page-content">
                         <?php 
-                        // Display content - if it's already HTML, show it directly
-                        // Otherwise use the rendered_content from markdown
+                        // Display content - check if it's HTML from the editor or markdown
                         $content = $currentPage['content'] ?? '';
-                        if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
-                            // Content appears to be HTML
+                        
+                        // Check for common HTML tags that would come from the editor
+                        $htmlTags = ['<p>', '<p ', '<strong>', '<em>', '<blockquote>', '<ul>', '<ol>', '<h1>', '<h2>', '<h3>', '<div>', '<br'];
+                        $isHtml = false;
+                        foreach ($htmlTags as $tag) {
+                            if (stripos($content, $tag) !== false) {
+                                $isHtml = true;
+                                break;
+                            }
+                        }
+                        
+                        if ($isHtml) {
+                            // Content is HTML from the editor, display directly
                             echo $content;
                         } else {
-                            // Content is plain text or markdown, use rendered version
+                            // Content is markdown or plain text, use the Parsedown-rendered version
                             echo $currentPage['rendered_content'] ?? $content;
                         }
                         ?>
