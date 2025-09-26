@@ -295,6 +295,7 @@ function getBookColor($title) {
     z-index: 1;
     font-size: 14px;
     transition: color 0.2s ease;
+    line-height: 1;
 }
 
 .visibility-mode-toggle .private-icon {
@@ -303,6 +304,14 @@ function getBookColor($title) {
 
 .visibility-mode-toggle .public-icon {
     color: #666666;
+}
+
+.visibility-mode-toggle .toggle-icon i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
 /* Checked state (public) */
