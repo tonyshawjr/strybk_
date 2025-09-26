@@ -93,6 +93,7 @@ include __DIR__ . '/../partials/header.php';
             <form method="POST" action="/pages/<?= $page['id'] ?>/update" id="page-form">
                 <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
                 <input type="hidden" name="kind" value="<?= htmlspecialchars($page['kind'] ?? 'chapter') ?>">
+                <input type="hidden" name="book_id" value="<?= htmlspecialchars($page['book_id']) ?>">
                 
                 <!-- Title Input -->
                 <div class="editor-title">
@@ -1200,9 +1201,13 @@ function restoreVersion(pageId, versionNumber) {
     .then(data => {
         if (data.success) {
             // Clear the draft from localStorage to prevent it from overriding the restored version
-            const bookId = <?= $page['book_id'] ?>;
-            const draftKey = `strybk_draft_${bookId}_${pageId}`;
-            localStorage.removeItem(draftKey);
+            // Get book_id from the form or page data
+            const bookIdInput = document.querySelector('input[name="book_id"]');
+            if (bookIdInput) {
+                const bookId = bookIdInput.value;
+                const draftKey = `strybk_draft_${bookId}_${pageId}`;
+                localStorage.removeItem(draftKey);
+            }
             
             alert('Version restored successfully!');
             closeVersionHistory();
