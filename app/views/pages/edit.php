@@ -163,18 +163,31 @@ include __DIR__ . '/../partials/header.php';
 
 /* Editor Toolbar */
 .editor-toolbar {
-    background: #F5F5F5;
+    background: transparent;
     padding: 8px 16px;
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid #F0F0F0;
 }
 
 .toolbar-group {
     display: flex;
     gap: 4px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Hide formatting tools in view mode */
+.editor-toolbar.view-mode .toolbar-group:not(:first-child) {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    display: none;
+}
+
+.editor-toolbar.view-mode .toolbar-divider {
+    display: none;
 }
 
 /* View Mode Toggle */
@@ -569,17 +582,20 @@ document.getElementById('view-toggle')?.addEventListener('change', function() {
     const isEditMode = this.checked;
     const editor = document.getElementById('editor');
     const titleInput = document.querySelector('.title-input');
+    const toolbar = document.querySelector('.editor-toolbar');
     
     if (isEditMode) {
-        // Edit mode
+        // Edit mode - show all toolbar buttons
         editor.setAttribute('contenteditable', 'true');
         titleInput.removeAttribute('readonly');
         editor.style.cursor = 'text';
+        toolbar.classList.remove('view-mode');
     } else {
-        // View mode - read only
+        // View mode - hide formatting buttons
         editor.setAttribute('contenteditable', 'false');
         titleInput.setAttribute('readonly', 'readonly');
         editor.style.cursor = 'default';
+        toolbar.classList.add('view-mode');
     }
 });
 

@@ -238,25 +238,26 @@ function getBookColor($title) {
 
 /* View Book Link */
 .view-book-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    background: white;
-    border: 1px solid #E5E5E5;
+    display: inline-block;
+    padding: 10px 20px;
+    background: #111111;
+    color: white;
     border-radius: 6px;
-    color: #666666;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     transition: all 0.2s ease;
 }
 
+.view-book-link i {
+    margin-right: 6px;
+}
+
 .view-book-link:hover {
-    background: #F5F5F5;
-    border-color: #111111;
-    color: #111111;
+    background: #333333;
+    color: white;
+    transform: translateY(-1px);
 }
 
 /* Privacy Toggle */
@@ -823,6 +824,22 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
     // Update icon
     if (newStatus === 'public') {
         this.querySelector('.toggle-icon').innerHTML = `<i class="fa-regular fa-eye"></i>`;
+        
+        // Show View Book link
+        const viewLink = document.querySelector('.view-book-link');
+        if (!viewLink) {
+            const bookMeta = document.querySelector('.book-meta-section');
+            const linkHtml = `
+                <a href="/read/<?= $book['slug'] ?>" target="_blank" class="view-book-link">
+                    <i class="fa-regular fa-eye"></i>
+                    View Book
+                </a>
+            `;
+            // Insert after author
+            const author = bookMeta.querySelector('.book-author-display');
+            author.insertAdjacentHTML('afterend', linkHtml);
+        }
+        
         // Show public link
         if (!document.querySelector('.public-link')) {
             const linkHtml = `
@@ -837,6 +854,8 @@ document.querySelector('.privacy-toggle')?.addEventListener('click', function() 
         }
     } else {
         this.querySelector('.toggle-icon').innerHTML = `<i class="fa-solid fa-lock"></i>`;
+        // Hide View Book link
+        document.querySelector('.view-book-link')?.remove();
         // Hide public link
         document.querySelector('.public-link')?.remove();
     }
