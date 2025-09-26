@@ -252,13 +252,22 @@ class BookController {
      */
     public function toggleVisibility(int $id): void {
         $this->auth->requireAuth();
-        $this->auth->checkCsrf();
+        
+        // Check CSRF manually for AJAX requests
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['_token'] ?? '';
+        if (!$this->auth->verifyCsrf($token)) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Invalid CSRF token']);
+            return;
+        }
         
         $userId = $this->auth->user()['id'];
         
         // Check ownership
         if (!$this->bookModel->isOwner($id, $userId)) {
             http_response_code(403);
+            header('Content-Type: application/json');
             echo json_encode(['error' => 'Forbidden']);
             return;
         }
