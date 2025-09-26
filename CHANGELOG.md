@@ -2,6 +2,37 @@
 
 All notable changes to this project are tracked here.
 
+## [0.5.0] - 2025-09-26
+### Added
+- Complete design system and polish (Phase 1 Milestone 5)
+- Comprehensive CSS design system (/public/css/app.css):
+  - CSS variables for colors, typography, spacing, and shadows
+  - Consistent design tokens across the application
+  - Typography system with font scales
+  - Grid and flexbox utilities
+  - Form components and styling
+  - Button variants and states
+  - Alert and card components
+  - Animation utilities
+- Beautiful homepage with hero section and features
+- HomeController for handling public pages
+- Responsive navigation bar with mobile support
+- Enhanced login page with design system integration
+- Print styles for better document printing
+- Accessibility improvements with focus states
+- Smooth scroll for anchor links
+
+### Changed
+- Updated all views to use centralized CSS design system
+- Replaced inline styles with CSS classes
+- Improved responsive layouts across all pages
+- Enhanced visual consistency throughout the application
+- Updated flash messages to use alert components
+
+### Fixed
+- Cleaned up duplicate CSS styles in login page
+- Improved mobile responsiveness for navigation
+
 ## [0.4.0] - 2025-09-26
 ### Added
 - Complete page reordering and navigation system (Phase 1 Milestone 4)
