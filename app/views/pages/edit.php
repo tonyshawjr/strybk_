@@ -1,360 +1,560 @@
-<?php include __DIR__ . '/../partials/header.php'; ?>
+<?php 
+$showBackButton = true;
+include __DIR__ . '/../partials/header.php'; 
+?>
 
 <div class="container">
-    <nav class="breadcrumb">
-        <a href="/dashboard" class="breadcrumb-item">Dashboard</a>
-        <span class="breadcrumb-separator">›</span>
-        <a href="/books" class="breadcrumb-item">Books</a>
-        <span class="breadcrumb-separator">›</span>
-        <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="breadcrumb-item"><?= htmlspecialchars($book['title']) ?></a>
-        <span class="breadcrumb-separator">›</span>
-        <span class="breadcrumb-current"><?= htmlspecialchars($page['title']) ?></span>
-    </nav>
-    
-    <div class="page-header">
-        <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="btn-back">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
-            Back to <?= htmlspecialchars($book['title']) ?>
-        </a>
-        <h1>Edit Page</h1>
-    </div>
-
-    <form method="POST" action="/pages/<?= $page['id'] ?>/update" enctype="multipart/form-data" class="page-form">
-        <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-        
-        <div class="form-group">
-            <label for="kind">Page Type</label>
-            <select id="kind" name="kind" class="page-type-selector">
-                <option value="chapter" <?= $page['kind'] === 'chapter' ? 'selected' : '' ?>>Chapter</option>
-                <option value="section" <?= $page['kind'] === 'section' ? 'selected' : '' ?>>Section</option>
-                <option value="picture" <?= $page['kind'] === 'picture' ? 'selected' : '' ?>>Picture</option>
-                <option value="divider" <?= $page['kind'] === 'divider' ? 'selected' : '' ?>>Divider</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="title">Title <span class="required">*</span></label>
-            <input type="text" id="title" name="title" value="<?= htmlspecialchars($page['title']) ?>" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="position">Position</label>
-            <input type="number" id="position" name="position" value="<?= ($page['order_index'] ?? 0) + 1 ?>" min="1">
-            <p class="help-text">Order of this page in the book</p>
-        </div>
-        
-        <div class="form-group content-group" id="content-group" <?= in_array($page['kind'], ['picture', 'divider']) ? 'style="display: none;"' : '' ?>>
-            <label for="content">Content</label>
-            <textarea id="content" name="content" rows="20"><?= htmlspecialchars($page['content'] ?? '') ?></textarea>
-            <div class="editor-toolbar">
-                <span class="word-count" id="word-count"><?= $page['word_count'] ?> words</span>
-                <span class="char-count" id="char-count">0 characters</span>
-                <span class="last-saved">Last saved: <?= format_date($page['updated_at'] ?? $page['created_at']) ?></span>
+    <div class="editor-container">
+        <!-- Editor Toolbar -->
+        <div class="editor-toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" data-command="visibility" title="Toggle visibility">
+                    <i class="fa-regular fa-eye"></i>
+                </button>
+                <button class="toolbar-btn active" data-command="edit" title="Edit mode">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" data-command="bold" title="Bold">
+                    <i class="fa-solid fa-bold"></i>
+                </button>
+                <button class="toolbar-btn" data-command="italic" title="Italic">
+                    <i class="fa-solid fa-italic"></i>
+                </button>
+                <button class="toolbar-btn" data-command="quote" title="Quote">
+                    <i class="fa-solid fa-quote-left"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" data-command="code" title="Code">
+                    <i class="fa-solid fa-code"></i>
+                </button>
+                <button class="toolbar-btn" data-command="chevrons" title="Chevrons">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <button class="toolbar-btn" data-command="link" title="Link">
+                    <i class="fa-solid fa-link"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" data-command="bullet" title="Bullet list">
+                    <i class="fa-solid fa-list-ul"></i>
+                </button>
+                <button class="toolbar-btn" data-command="number" title="Numbered list">
+                    <i class="fa-solid fa-list-ol"></i>
+                </button>
+                <button class="toolbar-btn" data-command="image" title="Insert image">
+                    <i class="fa-regular fa-image"></i>
+                </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="toolbar-btn" data-command="history" title="History">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+                <button class="toolbar-btn" data-command="check" title="Save">
+                    <i class="fa-solid fa-check"></i>
+                </button>
             </div>
         </div>
         
-        <div class="form-group picture-group" id="picture-group" <?= $page['kind'] !== 'picture' ? 'style="display: none;"' : '' ?>>
-            <?php if ($page['kind'] === 'picture' && $page['content']): ?>
-                <div class="current-image">
-                    <img src="<?= htmlspecialchars($page['content']) ?>" alt="Current image">
-                </div>
-            <?php endif; ?>
-            <label for="image">Image</label>
-            <input type="file" id="image" name="image" accept="image/jpeg,image/jpg,image/png,image/webp">
-            <p class="help-text">Upload a new image to replace the current one (JPG, PNG, or WebP, max 10MB)</p>
-        </div>
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Update Page</button>
-            <a href="/books/<?= htmlspecialchars($book['slug']) ?>/edit" class="btn btn-secondary">Cancel</a>
-            
-            <form method="POST" action="/pages/<?= $page['id'] ?>/delete" class="delete-form" 
-                  onsubmit="return confirm('Are you sure you want to delete this page?')">
+        <!-- Editor Content Area -->
+        <div class="editor-content">
+            <form method="POST" action="/pages/<?= $page['id'] ?>/update" id="page-form">
                 <input type="hidden" name="_token" value="<?= $auth->csrfToken() ?>">
-                <button type="submit" class="btn btn-danger">Delete Page</button>
+                <input type="hidden" name="kind" value="<?= htmlspecialchars($page['kind'] ?? 'chapter') ?>">
+                
+                <!-- Title Input -->
+                <div class="editor-title">
+                    <input type="text" 
+                           name="title" 
+                           class="title-input" 
+                           placeholder="Page title..." 
+                           value="<?= htmlspecialchars($page['title']) ?>"
+                           required>
+                </div>
+                
+                <!-- Content Editor -->
+                <div class="editor-body">
+                    <div class="editor-wrapper">
+                        <div id="editor" class="content-editor" contenteditable="true">
+                            <?= $page['content'] ?>
+                        </div>
+                        <textarea name="content" id="content-textarea" style="display: none;"><?= htmlspecialchars($page['content']) ?></textarea>
+                    </div>
+                </div>
+                
+                <!-- Editor Footer -->
+                <div class="editor-footer">
+                    <div class="word-count">
+                        <span id="word-count">0</span> words
+                    </div>
+                    <div class="editor-actions">
+                        <button type="button" class="btn-secondary" onclick="window.location.href='/books/<?= htmlspecialchars($book['slug']) ?>/edit'">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Page</button>
+                    </div>
+                </div>
             </form>
         </div>
-    </form>
+    </div>
 </div>
 
-<!-- SimpleMDE CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
-
-<!-- SimpleMDE JS -->
-<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
-
 <style>
-.page-form {
-    max-width: 900px;
-    margin: 2rem auto;
+/* Editor Container */
+.editor-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 40px;
 }
 
-.breadcrumb {
-    display: flex;
-    align-items: center;
-    font-size: 0.875rem;
-    color: var(--gray-600);
-    margin-bottom: 1rem;
-}
-
-.breadcrumb-item {
-    color: var(--gray-600);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.breadcrumb-item:hover {
-    color: var(--purple);
-}
-
-.breadcrumb-separator {
-    margin: 0 0.5rem;
-    color: var(--gray-400);
-}
-
-.breadcrumb-current {
-    color: var(--gray-900);
-    font-weight: 500;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.btn-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--gray-600);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.btn-back:hover {
-    color: var(--purple);
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: var(--gray-700);
-}
-
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 0.625rem;
-    border: 1px solid var(--gray-300);
-    border-radius: 6px;
-    font-size: 1rem;
-}
-
-.form-group input[type="text"]:focus,
-.form-group input[type="number"]:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--purple);
-    box-shadow: 0 0 0 3px rgba(108, 74, 182, 0.1);
-}
-
-.required {
-    color: #dc2626;
-}
-
-.help-text {
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: var(--gray-500);
-}
-
-.current-image {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: var(--gray-50);
-    border-radius: 6px;
-}
-
-.current-image img {
-    max-width: 100%;
-    height: auto;
-    max-height: 400px;
-    display: block;
-    margin: 0 auto;
-    border-radius: 4px;
-}
-
+/* Editor Toolbar */
 .editor-toolbar {
+    background: #F5F5F5;
+    border-bottom: 1px solid #E5E5E5;
+    padding: 8px 16px;
     display: flex;
-    justify-content: space-between;
-    padding: 0.5rem;
-    background: var(--gray-50);
-    border: 1px solid var(--gray-300);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    font-size: 0.875rem;
-    color: var(--gray-600);
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-.last-saved {
-    color: var(--gray-500);
-    font-style: italic;
-}
-
-.form-actions {
+.toolbar-group {
     display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
+    gap: 4px;
 }
 
-.delete-form {
-    margin-left: auto;
+.toolbar-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #666666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
 }
 
-.btn-danger {
-    background: #dc2626;
+.toolbar-btn:hover {
+    background: white;
+    color: #111111;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.toolbar-btn.active {
+    background: #111111;
     color: white;
 }
 
-.btn-danger:hover {
-    background: #b91c1c;
+.toolbar-btn.active:hover {
+    background: #333333;
+    color: white;
 }
 
-/* SimpleMDE Overrides */
-.CodeMirror {
-    border-radius: 6px 6px 0 0;
-    border-color: var(--gray-300);
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: #D5D5D5;
 }
 
-.CodeMirror-focused {
-    border-color: var(--purple);
-    box-shadow: 0 0 0 3px rgba(108, 74, 182, 0.1);
+/* Editor Content */
+.editor-content {
+    padding: 0;
 }
 
-.editor-toolbar.fullscreen {
-    z-index: 10;
+/* Title Input */
+.editor-title {
+    padding: 24px 32px;
+    border-bottom: 1px solid #F0F0F0;
 }
 
-.CodeMirror-fullscreen {
-    z-index: 9;
+.title-input {
+    width: 100%;
+    font-size: 32px;
+    font-weight: 700;
+    color: #111111;
+    border: none;
+    outline: none;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
 }
 
-.editor-toolbar {
-    border-color: var(--gray-300);
-    border-radius: 6px 6px 0 0;
+.title-input::placeholder {
+    color: #CCCCCC;
 }
 
-.editor-preview {
+/* Content Editor */
+.editor-body {
+    padding: 32px;
+    min-height: 500px;
+}
+
+.editor-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.content-editor {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #111111;
+    min-height: 400px;
+    outline: none;
+}
+
+.content-editor:focus {
+    outline: none;
+}
+
+/* Editor Typography */
+.content-editor h1,
+.content-editor h2,
+.content-editor h3 {
+    font-weight: 700;
+    margin: 24px 0 16px;
+    color: #111111;
+}
+
+.content-editor h1 {
+    font-size: 32px;
+}
+
+.content-editor h2 {
+    font-size: 28px;
+}
+
+.content-editor h3 {
+    font-size: 24px;
+}
+
+.content-editor p {
+    margin: 0 0 16px;
+}
+
+.content-editor ul,
+.content-editor ol {
+    margin: 0 0 16px;
+    padding-left: 24px;
+}
+
+.content-editor li {
+    margin-bottom: 8px;
+}
+
+.content-editor blockquote {
+    border-left: 3px solid #E5E5E5;
+    padding-left: 20px;
+    margin: 16px 0;
+    color: #666666;
+    font-style: italic;
+}
+
+.content-editor code {
+    background: #F5F5F5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #333333;
+}
+
+.content-editor pre {
+    background: #F5F5F5;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+.content-editor pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.content-editor a {
+    color: #111111;
+    text-decoration: underline;
+}
+
+.content-editor a:hover {
+    color: #666666;
+}
+
+.content-editor img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 16px auto;
+    border-radius: 6px;
+}
+
+/* Editor Footer */
+.editor-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+    border-top: 1px solid #F0F0F0;
+    background: #FAFAFA;
+}
+
+.word-count {
+    font-size: 14px;
+    color: #999999;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: #111111;
+    color: white;
+    border-color: #111111;
+}
+
+.btn-primary:hover {
+    background: #333333;
+    border-color: #333333;
+}
+
+.btn-secondary {
     background: white;
+    color: #666666;
+    border-color: #E5E5E5;
 }
 
-.editor-preview-side {
-    border-left: 1px solid var(--gray-300);
+.btn-secondary:hover {
+    background: #F5F5F5;
+    color: #111111;
+    border-color: #111111;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .editor-toolbar {
+        padding: 8px;
+        gap: 4px;
+    }
+    
+    .toolbar-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .editor-title {
+        padding: 20px;
+    }
+    
+    .title-input {
+        font-size: 24px;
+    }
+    
+    .editor-body {
+        padding: 20px;
+    }
+    
+    .content-editor {
+        font-size: 16px;
+    }
+    
+    .editor-footer {
+        padding: 12px 20px;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .editor-actions {
+        width: 100%;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        flex: 1;
+    }
 }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const kindSelector = document.getElementById('kind');
-    const contentGroup = document.getElementById('content-group');
-    const pictureGroup = document.getElementById('picture-group');
-    const titleInput = document.getElementById('title');
-    const contentTextarea = document.getElementById('content');
-    
-    // Initialize SimpleMDE
-    let simplemde = null;
-    
-    function initializeEditor() {
-        if (simplemde || !contentTextarea) return;
+// Update word count
+function updateWordCount() {
+    const editor = document.getElementById('editor');
+    const text = editor.innerText || editor.textContent || '';
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    document.getElementById('word-count').textContent = words;
+}
+
+// Initialize word count
+updateWordCount();
+
+// Update word count on input
+document.getElementById('editor').addEventListener('input', updateWordCount);
+
+// Sync content to hidden textarea before submit
+document.getElementById('page-form').addEventListener('submit', function(e) {
+    const editor = document.getElementById('editor');
+    const textarea = document.getElementById('content-textarea');
+    textarea.value = editor.innerHTML;
+});
+
+// Toolbar button handlers
+document.querySelectorAll('.toolbar-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const command = this.dataset.command;
         
-        simplemde = new SimpleMDE({
-            element: contentTextarea,
-            spellChecker: false,
-            status: false,
-            toolbar: [
-                'bold', 'italic', 'heading', '|',
-                'quote', 'unordered-list', 'ordered-list', '|',
-                'link', 'image', '|',
-                'preview', 'side-by-side', 'fullscreen', '|',
-                'guide'
-            ],
-            placeholder: 'Start writing your content here...',
-            autosave: {
-                enabled: true,
-                uniqueId: 'strybk-page-<?= $page['id'] ?>',
-                delay: 1000,
-            }
-        });
-        
-        // Update word count
-        function updateCounts() {
-            const content = simplemde.value();
-            const plainText = content.replace(/[#*_\[\]()>`~-]+/g, '');
-            const words = plainText.trim().split(/\s+/).filter(word => word.length > 0).length;
-            const chars = plainText.length;
-            
-            document.getElementById('word-count').textContent = words + ' words';
-            document.getElementById('char-count').textContent = chars + ' characters';
+        switch(command) {
+            case 'bold':
+                document.execCommand('bold', false, null);
+                break;
+            case 'italic':
+                document.execCommand('italic', false, null);
+                break;
+            case 'quote':
+                document.execCommand('formatBlock', false, 'blockquote');
+                break;
+            case 'code':
+                // Wrap selection in code tags
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const code = document.createElement('code');
+                    try {
+                        range.surroundContents(code);
+                    } catch(e) {
+                        // If selection spans multiple elements, insert at cursor
+                        document.execCommand('insertHTML', false, '<code>' + selection.toString() + '</code>');
+                    }
+                }
+                break;
+            case 'link':
+                const url = prompt('Enter URL:');
+                if (url) {
+                    document.execCommand('createLink', false, url);
+                }
+                break;
+            case 'bullet':
+                document.execCommand('insertUnorderedList', false, null);
+                break;
+            case 'number':
+                document.execCommand('insertOrderedList', false, null);
+                break;
+            case 'image':
+                const imageUrl = prompt('Enter image URL:');
+                if (imageUrl) {
+                    document.execCommand('insertImage', false, imageUrl);
+                }
+                break;
+            case 'check':
+                document.getElementById('page-form').submit();
+                break;
+            case 'history':
+                alert('Version history coming soon');
+                break;
+            case 'visibility':
+                // Toggle visibility button state
+                this.classList.toggle('active');
+                break;
+            case 'edit':
+                // Already in edit mode
+                break;
+            case 'chevrons':
+                // Custom formatting
+                document.execCommand('insertText', false, '» ');
+                break;
         }
         
-        simplemde.codemirror.on('change', updateCounts);
-        updateCounts();
+        // Keep focus on editor
+        document.getElementById('editor').focus();
+    });
+});
+
+// Auto-save draft every 30 seconds
+setInterval(function() {
+    const editor = document.getElementById('editor');
+    const title = document.querySelector('.title-input').value;
+    if (editor && title) {
+        localStorage.setItem('draft-page-' + <?= $page['id'] ?>, JSON.stringify({
+            title: title,
+            content: editor.innerHTML,
+            timestamp: Date.now()
+        }));
+    }
+}, 30000);
+
+// Load draft on page load if exists
+window.addEventListener('load', function() {
+    const draft = localStorage.getItem('draft-page-' + <?= $page['id'] ?>);
+    if (draft) {
+        const data = JSON.parse(draft);
+        // Only load if draft is newer than saved content
+        if (confirm('A draft was found. Would you like to restore it?')) {
+            document.querySelector('.title-input').value = data.title;
+            document.getElementById('editor').innerHTML = data.content;
+            updateWordCount();
+        }
+    }
+});
+
+// Clear draft on successful save
+document.getElementById('page-form').addEventListener('submit', function() {
+    localStorage.removeItem('draft-page-' + <?= $page['id'] ?>);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Check if we're in the editor
+    const editor = document.getElementById('editor');
+    if (!editor.contains(document.activeElement) && document.activeElement !== editor) {
+        return;
     }
     
-    // Handle page type change
-    kindSelector.addEventListener('change', function() {
-        const kind = this.value;
-        
-        if (kind === 'picture') {
-            contentGroup.style.display = 'none';
-            pictureGroup.style.display = 'block';
-            if (simplemde) {
-                simplemde.toTextArea();
-                simplemde = null;
-            }
-        } else if (kind === 'divider') {
-            contentGroup.style.display = 'none';
-            pictureGroup.style.display = 'none';
-            if (simplemde) {
-                simplemde.toTextArea();
-                simplemde = null;
-            }
-        } else {
-            contentGroup.style.display = 'block';
-            pictureGroup.style.display = 'none';
-            initializeEditor();
-        }
-        
-        // Update title placeholder
-        if (kind === 'chapter') {
-            titleInput.placeholder = 'Chapter title';
-        } else if (kind === 'section') {
-            titleInput.placeholder = 'Section title';
-        } else if (kind === 'picture') {
-            titleInput.placeholder = 'Image caption';
-        } else if (kind === 'divider') {
-            titleInput.placeholder = 'Divider text (optional)';
-        }
-    });
+    // Cmd/Ctrl + S to save
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('page-form').submit();
+    }
     
-    // Initialize editor if content is visible
-    const currentKind = kindSelector.value;
-    if (currentKind === 'chapter' || currentKind === 'section') {
-        initializeEditor();
+    // Cmd/Ctrl + B for bold
+    if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        document.execCommand('bold', false, null);
+    }
+    
+    // Cmd/Ctrl + I for italic
+    if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+        e.preventDefault();
+        document.execCommand('italic', false, null);
     }
 });
 </script>
