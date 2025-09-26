@@ -1177,6 +1177,9 @@ function displayComparison(data) {
                 <button class="toggle-btn" onclick="toggleCompareView('side', this)">
                     <i class="fa-solid fa-columns"></i> Side by Side
                 </button>
+                <button class="toggle-btn restore-btn" onclick="confirmRestore(${data.page.id}, ${data.version1.version_number})">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Restore Version ${data.version1.version_number}
+                </button>
             </div>
             <div id="compare-diff-view" style="display: block;">
                 ${diffHtml}
@@ -1207,28 +1210,50 @@ function generateDiffView(oldText, newText) {
         return '<div class="diff-container"><p class="no-changes">No changes detected between versions.</p></div>';
     }
     
-    // Split into words for word-level diff
-    const oldWords = oldClean.split(/(\s+)/);
-    const newWords = newClean.split(/(\s+)/);
-    
-    // Compute word-level diff
-    const diff = computeWordDiff(oldWords, newWords);
+    // Use a simpler approach - find the longest common subsequence
+    const result = findDifferences(oldClean, newClean);
     
     let diffHtml = '<div class="diff-container"><div class="diff-text">';
-    
-    diff.forEach(part => {
-        if (part.type === 'unchanged') {
-            diffHtml += escapeHtml(part.text);
-        } else if (part.type === 'removed') {
-            diffHtml += `<span class="diff-removed">${escapeHtml(part.text)}</span>`;
-        } else if (part.type === 'added') {
-            diffHtml += `<span class="diff-added">${escapeHtml(part.text)}</span>`;
-        }
-    });
-    
+    diffHtml += result;
     diffHtml += '</div></div>';
     
     return diffHtml;
+}
+
+function findDifferences(oldText, newText) {
+    // Simple character-based diff that finds continuous changes
+    let result = '';
+    let i = 0, j = 0;
+    
+    // Find common prefix
+    while (i < oldText.length && j < newText.length && oldText[i] === newText[j]) {
+        result += escapeHtml(oldText[i]);
+        i++;
+        j++;
+    }
+    
+    // Find common suffix
+    let oldEnd = oldText.length - 1;
+    let newEnd = newText.length - 1;
+    let suffix = '';
+    
+    while (oldEnd > i && newEnd > j && oldText[oldEnd] === newText[newEnd]) {
+        suffix = escapeHtml(oldText[oldEnd]) + suffix;
+        oldEnd--;
+        newEnd--;
+    }
+    
+    // Everything in between is the change
+    if (i <= oldEnd) {
+        result += `<span class="diff-removed">${escapeHtml(oldText.substring(i, oldEnd + 1))}</span>`;
+    }
+    if (j <= newEnd) {
+        result += `<span class="diff-added">${escapeHtml(newText.substring(j, newEnd + 1))}</span>`;
+    }
+    
+    result += suffix;
+    
+    return result;
 }
 
 function computeWordDiff(oldWords, newWords) {
@@ -1940,6 +1965,16 @@ function escapeHtml(text) {
 .toggle-btn.active {
     background: #111111;
     color: white;
+}
+
+.toggle-btn.restore-btn {
+    background: #22c55e;
+    color: white;
+    margin-left: auto;
+}
+
+.toggle-btn.restore-btn:hover {
+    background: #16a34a;
 }
 
 /* Diff View Styles */

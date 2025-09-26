@@ -219,7 +219,7 @@ class PageController {
         
         // Update page
         try {
-            $this->pageModel->update($id, [
+            $updateResult = $this->pageModel->update($id, [
                 'title' => $title,
                 'content' => $content,
                 'kind' => $kind,
@@ -227,15 +227,17 @@ class PageController {
                 'word_count' => $wordCount
             ]);
             
-            // Create a version record for this update
-            $this->versionModel->createVersion($id, [
-                'book_id' => $page['book_id'],
-                'user_id' => $userId,
-                'title' => $title,
-                'content' => $content,
-                'word_count' => $wordCount,
-                'kind' => $kind
-            ]);
+            // Only create a version if the update was successful and content has actually changed
+            if ($updateResult && ($page['content'] !== $content || $page['title'] !== $title)) {
+                $this->versionModel->createVersion($id, [
+                    'book_id' => $page['book_id'],
+                    'user_id' => $userId,
+                    'title' => $title,
+                    'content' => $content,
+                    'word_count' => $wordCount,
+                    'kind' => $kind
+                ]);
+            }
             
             // Check if this is an AJAX request
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
