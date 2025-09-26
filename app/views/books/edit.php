@@ -180,6 +180,14 @@ function getBookColor($title) {
 ?>
 
 <style>
+/* Override global anchor underline for this page */
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
 /* Book Detail Layout */
 .book-detail {
     display: grid;
@@ -636,13 +644,13 @@ function getBookColor($title) {
 }
 
 .page-list-link {
-    text-decoration: none !important;
+    text-decoration: none;
     color: inherit;
     display: block;
 }
 
 .page-list-link:hover {
-    text-decoration: none !important;
+    text-decoration: none;
 }
 
 .page-list-item {
