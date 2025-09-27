@@ -111,21 +111,65 @@ include __DIR__ . '/../partials/header.php';
             <!-- Gallery View -->
             <div id="gallery-view" class="pages-view gallery-view active" data-mode="edit">
                 <div class="pages-grid" id="pages-grid">
-                    <?php foreach ($pages as $page): ?>
+                    <?php foreach ($pages as $page): 
+                        // Map database kind to display type
+                        $pageType = '';
+                        $pageIcon = '';
+                        switch($page['kind']) {
+                            case 'text':
+                                $pageType = 'chapter';
+                                $pageIcon = 'fa-paragraph';
+                                break;
+                            case 'section':
+                                $pageType = 'section';
+                                $pageIcon = 'fa-indent';
+                                break;
+                            case 'picture':
+                                $pageType = 'picture';
+                                $pageIcon = 'fa-image';
+                                break;
+                            case 'divider':
+                                $pageType = 'divider';
+                                $pageIcon = 'fa-minus';
+                                break;
+                            default:
+                                $pageType = 'chapter';
+                                $pageIcon = 'fa-paragraph';
+                        }
+                    ?>
                         <a href="/pages/<?= $page['id'] ?>/edit" class="page-card-link">
-                            <div class="page-card" data-id="<?= $page['id'] ?>">
+                            <div class="page-card" data-id="<?= $page['id'] ?>" data-kind="<?= $pageType ?>">
                                 <div class="page-thumbnail">
-                                    <div class="page-content-preview">
-                                        <h3><?= htmlspecialchars($page['title']) ?></h3>
-                                        <p><?= htmlspecialchars(substr(strip_tags($page['content'] ?? ''), 0, 100)) ?>...</p>
-                                    </div>
+                                    <?php if ($page['kind'] === 'picture' && !empty($page['content'])): ?>
+                                        <div class="page-image-preview">
+                                            <img src="<?= htmlspecialchars($page['content']) ?>" alt="<?= htmlspecialchars($page['title']) ?>">
+                                        </div>
+                                    <?php elseif ($page['kind'] === 'divider'): ?>
+                                        <div class="page-divider-preview">
+                                            <div class="divider-line"></div>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="page-content-preview">
+                                            <h3><?= htmlspecialchars($page['title']) ?></h3>
+                                            <p><?= htmlspecialchars(substr(strip_tags($page['content'] ?? ''), 0, 100)) ?>...</p>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="drag-indicator">
                                         <i class="fa-solid fa-grip-vertical"></i>
+                                    </div>
+                                    <div class="page-type-badge">
+                                        <i class="fa-solid <?= $pageIcon ?>"></i>
                                     </div>
                                 </div>
                                 <div class="page-info">
                                     <h4><?= htmlspecialchars($page['title']) ?></h4>
-                                    <span class="word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
+                                    <?php if ($page['kind'] !== 'divider' && $page['kind'] !== 'picture'): ?>
+                                        <span class="word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
+                                    <?php elseif ($page['kind'] === 'picture'): ?>
+                                        <span class="word-count" style="color: #999;">Picture</span>
+                                    <?php else: ?>
+                                        <span class="word-count" style="color: #E5E5E5;">Divider</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </a>
@@ -137,14 +181,50 @@ include __DIR__ . '/../partials/header.php';
             <div id="list-view" class="pages-view list-view" data-mode="edit">
                 <div class="pages-list" id="pages-list">
 
-                    <?php foreach ($pages as $index => $page): ?>
+                    <?php foreach ($pages as $index => $page): 
+                        // Map database kind to display type
+                        $pageType = '';
+                        $pageIcon = '';
+                        switch($page['kind']) {
+                            case 'text':
+                                $pageType = 'chapter';
+                                $pageIcon = 'fa-paragraph';
+                                break;
+                            case 'section':
+                                $pageType = 'section';
+                                $pageIcon = 'fa-indent';
+                                break;
+                            case 'picture':
+                                $pageType = 'picture';
+                                $pageIcon = 'fa-image';
+                                break;
+                            case 'divider':
+                                $pageType = 'divider';
+                                $pageIcon = 'fa-minus';
+                                break;
+                            default:
+                                $pageType = 'chapter';
+                                $pageIcon = 'fa-paragraph';
+                        }
+                    ?>
                         <a href="/pages/<?= $page['id'] ?>/edit" class="page-list-link">
-                            <div class="page-list-item <?= $index === 0 ? 'active' : '' ?>" data-id="<?= $page['id'] ?>">
+                            <div class="page-list-item" data-id="<?= $page['id'] ?>" data-kind="<?= $pageType ?>">
                                 <span class="drag-handle">
                                     <i class="fa-solid fa-grip-vertical"></i>
                                 </span>
+                                <span class="page-type-icon">
+                                    <i class="fa-solid <?= $pageIcon ?>"></i>
+                                </span>
                                 <span class="page-title"><?= htmlspecialchars($page['title']) ?></span>
-                                <span class="page-word-count"><?= number_format(str_word_count($page['content'] ?? '')) ?> words</span>
+                                <span class="page-word-count">
+                                    <?php if ($page['kind'] !== 'divider' && $page['kind'] !== 'picture'): ?>
+                                        <?= number_format(str_word_count($page['content'] ?? '')) ?> words
+                                    <?php elseif ($page['kind'] === 'picture'): ?>
+                                        <i class="fa-solid fa-check" style="color: #999;"></i>
+                                    <?php else: ?>
+                                        <span style="color: #E5E5E5;">—</span>
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </a>
                     <?php endforeach; ?>
@@ -612,6 +692,68 @@ a:hover {
     color: #666666;
 }
 
+.page-image-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.page-image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.page-divider-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.divider-line {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #CCCCCC 20%, #CCCCCC 80%, transparent);
+}
+
+.page-type-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    color: #999999;
+}
+
+.page-card[data-kind="chapter"] .page-type-badge {
+    color: #111111;
+}
+
+.page-card[data-kind="section"] .page-type-badge {
+    color: #666666;
+}
+
+.page-card[data-kind="picture"] .page-type-badge {
+    color: #999999;
+}
+
+.page-card[data-kind="divider"] .page-type-badge {
+    color: #E5E5E5;
+}
+
 .page-content-preview h3 {
     font-size: 10px;
     font-weight: 600;
@@ -722,16 +864,30 @@ a:hover {
     border-left: none;
 }
 
-.page-list-item.active::before {
-    content: '';
-    position: absolute;
-    left: -16px;
-    width: 8px;
-    height: 8px;
-    background: #111111;
-    border-radius: 50%;
-    top: 50%;
-    transform: translateY(-50%);
+.page-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    margin-right: 12px;
+    color: #CCCCCC;
+    font-size: 14px;
+}
+
+.page-list-item[data-kind="chapter"] .page-type-icon {
+    color: #111111;
+}
+
+.page-list-item[data-kind="section"] .page-type-icon {
+    color: #666666;
+}
+
+.page-list-item[data-kind="picture"] .page-type-icon {
+    color: #999999;
+}
+
+.page-list-item[data-kind="divider"] .page-type-icon {
+    color: #E5E5E5;
 }
 
 .page-title {
