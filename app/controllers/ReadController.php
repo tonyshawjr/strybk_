@@ -148,9 +148,12 @@ class ReadController {
         if (in_array($currentPage['display_kind'], ['chapter', 'section'])) {
             $currentPage['rendered_content'] = $this->parsedown->text($currentPage['content']);
         }
-        // For picture pages, content field contains the image path
+        // For picture pages, content field contains the image path (strip any HTML tags)
         if ($currentPage['display_kind'] === 'picture') {
-            $currentPage['image_path'] = $currentPage['content'];
+            // Strip HTML tags that may have been added by WYSIWYG editor
+            $imagePath = strip_tags($currentPage['content']);
+            $imagePath = trim($imagePath);
+            $currentPage['image_path'] = $imagePath;
         }
         
         // Generate table of contents
